@@ -12,7 +12,7 @@
 
 
 
-#### **Describing the configuration\_samp.cfg:**
+#### **Describing the configuration\_sample.cfg:**
 
 
 
