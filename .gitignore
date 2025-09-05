@@ -5,6 +5,8 @@
 *.slx.r*
 *.mdl.r*
 
+resources/
+
 # Derived content-obscured files
 *.p
 
