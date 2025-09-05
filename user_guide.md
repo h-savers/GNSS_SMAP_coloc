@@ -16,10 +16,9 @@
 
 
 
-*  	processingmode :
-  processMode=1 → process CyGNSS data extracted and saved in one single file
+*  	processMode :	processMode=1 → process CyGNSS data extracted and saved in one single file
 
- 			processMode=2 → process CyGNSS data extracted and saved in daily format
+ 				processMode=2 → process CyGNSS data extracted and saved in daily format
 
 
 
@@ -55,11 +54,11 @@
 
 
 
-*  	cygnss\_path ------> path to the CYGNSS files extracted in daily format. It is for processmode=2
+*  	cygnss\_path ------> path to the CYGNSS files extracted in daily format (it is a path to a directory). It is for processmode=2
 
 
 
-*  	cygnss\_path ------> path to the CYGNSS file (a single extracted file). It is for processmode=1
+*  	cygnss\_path ------> path to the CYGNSS file (it is a path of a single extracted file, a .mat file). It is for processmode=1
 
 
 
