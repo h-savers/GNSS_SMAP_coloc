@@ -260,7 +260,7 @@ elseif processMode==2
     if CyGNSS_processing=="yes"  % just load a cygnss data as a sample to initialize the structure of output product
 
 
-        cygnss_file = strjoin([cygnss_path,'\',SampleDay,'_extended.mat'], '');
+        cygnss_file = strjoin([cygnss_path,'\',SampleDay,'_cygnss.mat'], '');
         cygnss_data = load(cygnss_file, 'DDM_NBRCS', 'EIRP', 'IndexDC', ...
                 'KURTOSIS', 'KURTOSIS_DOPP_0', 'QC', 'SNR', 'SPLAT', ...
                 'SPLON', 'THETA', 'DoY', 'TE_WIDTH', 'REFLECTIVITY_LINEAR', 'SS_r', 'PHI_Initial_sp_az_orbit', 'NF'); %load data
@@ -373,7 +373,7 @@ elseif processMode==2
         if CyGNSS_processing == "yes" % pre-process CyGNSS data
 
             datee = datetime(valid_dates(i), 'InputFormat', 'yyyy.MM.dd', 'Format', 'yyyyMMdd');
-            cygnss_file = strjoin([cygnss_path,'\',string(datee),'_extended.mat'], '');
+            cygnss_file = strjoin([cygnss_path,'\',string(datee),'_cygnss.mat'], '');
             cygnss_data = load(cygnss_file, 'DDM_NBRCS', 'EIRP', 'IndexDC', ...
                 'KURTOSIS', 'KURTOSIS_DOPP_0', 'QC', 'SNR', 'SPLAT', ...
                 'SPLON', 'THETA', 'DoY', 'TE_WIDTH', 'REFLECTIVITY_LINEAR', 'SS_r', 'PHI_Initial_sp_az_orbit', 'NF'); %load data
