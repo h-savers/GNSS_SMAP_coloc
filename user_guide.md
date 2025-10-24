@@ -58,7 +58,7 @@
 
 
 
-*  	cygnss\_path ------> path to the CYGNSS file (it is a path of a single extracted file, a .mat file). It is for processmode=1
+*  	cygnss\_file ------> path to the CYGNSS file (it is a path of a single extracted file, a .mat file). It is for processmode=1
 
 
 
