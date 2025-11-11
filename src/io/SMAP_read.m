@@ -9,28 +9,6 @@ elseif SMAP_resolution==9
 end
 
 %%%% creating the quality flag mask %%%%
-
-% % quality_flagAM = h5read(file_path,'/Soil_Moisture_Retrieval_Data_AM/retrieval_qual_flag');
-% % flipped_quality_flagAM = flip(quality_flagAM);
-% % quality_flagAM_mask = uint16(zeros(IN_COLS, IN_ROWS));
-% % for m=1:length(qfs)
-% %     flag = uint16(qfs(length(qfs) + 1 - m) * 2^(m-1));
-% %     tmp_qf = uint16(zeros(IN_COLS, IN_ROWS));
-% %     tmp_qf(bitand(flipped_quality_flagAM, flag) > 0) = 1;
-% %     quality_flagAM_mask = bitor(quality_flagAM_mask, tmp_qf);
-% % end
-% %
-% % quality_flagPM = h5read(file_path,'/Soil_Moisture_Retrieval_Data_PM/retrieval_qual_flag_dca_pm');
-% % flipped_quality_flagPM = flip(quality_flagPM);
-% % quality_flagPM_mask = uint16(zeros(IN_COLS, IN_ROWS));
-% % for m=1:length(qfs)
-% %     flag = uint16(qfs(length(qfs) + 1 - m) * 2^(m-1));
-% %     tmp_qf = uint16(zeros(IN_COLS, IN_ROWS));
-% %     tmp_qf(bitand(flipped_quality_flagPM, flag) > 0) = 1;
-% %     quality_flagPM_mask = bitor(quality_flagPM_mask, tmp_qf);
-% % end
-
-
 if SMAPQualityFlagFilter=="yes"
 
     quality_flagAM = h5read(file_path,'/Soil_Moisture_Retrieval_Data_AM/retrieval_qual_flag');

@@ -14,15 +14,7 @@ if Target_Resolution ==36
 elseif Target_Resolution==25
     
     if SMAP_resolution==9
-        
-% %         roughness_coefficient(:,:,1)=resize_average(SMAPproduct.roughness_coefficient, numcols, numrows);
-% %         latitude(:,:,1)=resize_average(SMAPproduct.latitude, numcols, numrows);
-% %         longitude(:,:,1)=resize_average(SMAPproduct.longitude, numcols, numrows);
-% %         albedo(:,:,1)=resize_average(SMAPproduct.albedo, numcols, numrows);
-% %         soil_moisture_error(:,:,1)=resize_average(SMAPproduct.soil_moisture_error, numcols, numrows);
-% %         soil_moisture=resize_average(SMAPproduct.soil_moisture, numcols, numrows);
-% %         vegetation_opacity(:,:,1)=resize_average(SMAPproduct.vegetation_opacity, numcols, numrows);
-% %         vegetation_water_content(:,:,1)=resize_average(SMAPproduct.vegetation_water_content, numcols, numrows);
+
         if SMAPQualityFlagFilter=="no"
             roughness_coefficient_nearest(:,:,1)=imresize(SMAPproduct.roughness_coefficient, [numrows,numcols],'nearest');
             latitude_nearest(:,:,1)=imresize(SMAPproduct.latitude, [numrows,numcols],'nearest');
@@ -143,25 +135,70 @@ elseif Target_Resolution==25
 
     elseif SMAP_resolution==36
 
-        %%resizing for 25km res
-        roughness_coefficient(:,:,1)=imresize(SMAPproduct.roughness_coefficient,[numrows,numcols],'bilinear');
-        latitude(:,:,1)=imresize(SMAPproduct.latitude,[numrows,numcols],'bilinear');
-        longitude(:,:,1)=imresize(SMAPproduct.longitude,[numrows,numcols],'bilinear');
-        albedo(:,:,1)=imresize(SMAPproduct.albedo,[numrows,numcols],'bilinear');
-        soil_moisture_error(:,:,1)=imresize(SMAPproduct.soil_moisture_error,[numrows,numcols],'bilinear');
-        soil_moisture=imresize(SMAPproduct.soil_moisture,[numrows,numcols],'bilinear');
-        vegetation_opacity(:,:,1)=imresize(SMAPproduct.vegetation_opacity,[numrows,numcols],'bilinear');
-        vegetation_water_content(:,:,1)=imresize(SMAPproduct.vegetation_water_content,[numrows,numcols],'bilinear');
+        if SMAPQualityFlagFilter=="no"
 
+            roughness_coefficient(:,:,1)=imresize(SMAPproduct.roughness_coefficient,[numrows,numcols],'bilinear');
+            latitude(:,:,1)=imresize(SMAPproduct.latitude,[numrows,numcols],'bilinear');
+            longitude(:,:,1)=imresize(SMAPproduct.longitude,[numrows,numcols],'bilinear');
+            albedo(:,:,1)=imresize(SMAPproduct.albedo,[numrows,numcols],'bilinear');
+            soil_moisture_error(:,:,1)=imresize(SMAPproduct.soil_moisture_error,[numrows,numcols],'bilinear');
+            soil_moisture=imresize(SMAPproduct.soil_moisture,[numrows,numcols],'bilinear');
+            vegetation_opacity(:,:,1)=imresize(SMAPproduct.vegetation_opacity,[numrows,numcols],'bilinear');
+            vegetation_water_content(:,:,1)=imresize(SMAPproduct.vegetation_water_content,[numrows,numcols],'bilinear');
+    
+    
+            SMAPproduct_atResolution.roughness_coefficient = roughness_coefficient;
+            SMAPproduct_atResolution.latitude = latitude;
+            SMAPproduct_atResolution.longitude = longitude;
+            SMAPproduct_atResolution.albedo = albedo;
+            SMAPproduct_atResolution.soil_moisture_error = soil_moisture_error;
+            SMAPproduct_atResolution.soil_moisture = soil_moisture;
+            SMAPproduct_atResolution.vegetation_opacity = vegetation_opacity;
+            SMAPproduct_atResolution.vegetation_water_content = vegetation_water_content;
+            
+        elseif SMAPQualityFlagFilter=="yes"
 
-        SMAPproduct_atResolution.roughness_coefficient = roughness_coefficient;
-        SMAPproduct_atResolution.latitude = latitude;
-        SMAPproduct_atResolution.longitude = longitude;
-        SMAPproduct_atResolution.albedo = albedo;
-        SMAPproduct_atResolution.soil_moisture_error = soil_moisture_error;
-        SMAPproduct_atResolution.soil_moisture = soil_moisture;
-        SMAPproduct_atResolution.vegetation_opacity = vegetation_opacity;
-        SMAPproduct_atResolution.vegetation_water_content = vegetation_water_content;
+            roughness_coefficient(:,:,1)=imresize(SMAPproduct.Filtered_B0.roughness_coefficient,[numrows,numcols],'bilinear');
+            latitude(:,:,1)=imresize(SMAPproduct.Filtered_B0.latitude,[numrows,numcols],'bilinear');
+            longitude(:,:,1)=imresize(SMAPproduct.Filtered_B0.longitude,[numrows,numcols],'bilinear');
+            albedo(:,:,1)=imresize(SMAPproduct.Filtered_B0.albedo,[numrows,numcols],'bilinear');
+            soil_moisture_error(:,:,1)=imresize(SMAPproduct.Filtered_B0.soil_moisture_error,[numrows,numcols],'bilinear');
+            soil_moisture=imresize(SMAPproduct.Filtered_B0.soil_moisture,[numrows,numcols],'bilinear');
+            vegetation_opacity(:,:,1)=imresize(SMAPproduct.Filtered_B0.vegetation_opacity,[numrows,numcols],'bilinear');
+            vegetation_water_content(:,:,1)=imresize(SMAPproduct.Filtered_B0.vegetation_water_content,[numrows,numcols],'bilinear');
+    
+    
+            SMAPproduct_atResolution.Filtered_B0.roughness_coefficient = roughness_coefficient;
+            SMAPproduct_atResolution.Filtered_B0.latitude = latitude;
+            SMAPproduct_atResolution.Filtered_B0.longitude = longitude;
+            SMAPproduct_atResolution.Filtered_B0.albedo = albedo;
+            SMAPproduct_atResolution.Filtered_B0.soil_moisture_error = soil_moisture_error;
+            SMAPproduct_atResolution.Filtered_B0.soil_moisture = soil_moisture;
+            SMAPproduct_atResolution.Filtered_B0.vegetation_opacity = vegetation_opacity;
+            SMAPproduct_atResolution.Filtered_B0.vegetation_water_content = vegetation_water_content;
+    
+    
+           
+            roughness_coefficient(:,:,1)=imresize(SMAPproduct.Filtered_B2.roughness_coefficient,[numrows,numcols],'bilinear');
+            latitude(:,:,1)=imresize(SMAPproduct.Filtered_B2.latitude,[numrows,numcols],'bilinear');
+            longitude(:,:,1)=imresize(SMAPproduct.Filtered_B2.longitude,[numrows,numcols],'bilinear');
+            albedo(:,:,1)=imresize(SMAPproduct.Filtered_B2.albedo,[numrows,numcols],'bilinear');
+            soil_moisture_error(:,:,1)=imresize(SMAPproduct.Filtered_B2.soil_moisture_error,[numrows,numcols],'bilinear');
+            soil_moisture=imresize(SMAPproduct.Filtered_B2.soil_moisture,[numrows,numcols],'bilinear');
+            vegetation_opacity(:,:,1)=imresize(SMAPproduct.Filtered_B2.vegetation_opacity,[numrows,numcols],'bilinear');
+            vegetation_water_content(:,:,1)=imresize(SMAPproduct.Filtered_B2.vegetation_water_content,[numrows,numcols],'bilinear');
+    
+    
+            SMAPproduct_atResolution.Filtered_B2.roughness_coefficient = roughness_coefficient;
+            SMAPproduct_atResolution.Filtered_B2.latitude = latitude;
+            SMAPproduct_atResolution.Filtered_B2.longitude = longitude;
+            SMAPproduct_atResolution.Filtered_B2.albedo = albedo;
+            SMAPproduct_atResolution.Filtered_B2.soil_moisture_error = soil_moisture_error;
+            SMAPproduct_atResolution.Filtered_B2.soil_moisture = soil_moisture;
+            SMAPproduct_atResolution.Filtered_B2.vegetation_opacity = vegetation_opacity;
+            SMAPproduct_atResolution.Filtered_B2.vegetation_water_content = vegetation_water_content;
+
+        end
     
     end
 

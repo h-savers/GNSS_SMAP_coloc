@@ -173,15 +173,10 @@ elseif processMode==2
     endDay = config.endDay;
     endDay = datetime(endDay, 'InputFormat', 'yyyyMMdd', 'Format', 'yyyy.MM.dd');
 
-    nDyas = daysact(startDay, endDay)+1;
+    valid_dates = startDay:endDay;
+    detail_dates = datevec(valid_dates);
+    nDyas = length(valid_dates);
     
-% %     folders = dir(fullfile(smap_path));
-% %     valid = ~ismember({folders.name}, {'.', '..'});
-% %     validfolders = folders(valid);
-% %     names = {validfolders.name};
-% %     names = names';
-% %     startID = find(names==startDay_str);% this is index of the day of the year for the start day in the files of smap directory
-
     if SMAP_resolution==9
 
         if SMAPQualityFlagFilter=="no"
@@ -246,14 +241,39 @@ elseif processMode==2
         end
 
     elseif SMAP_resolution==36
-        SMAPproduct_stacked.latitude=[];
-        SMAPproduct_stacked.longitude=[];
-        SMAPproduct_stacked.vegetation_opacity=[];
-        SMAPproduct_stacked.roughness_coefficient=[];
-        SMAPproduct_stacked.soil_moisture=[];
-        SMAPproduct_stacked.soil_moisture_error=[];
-        SMAPproduct_stacked.albedo=[];
-        SMAPproduct_stacked.vegetation_water_content=[];
+
+        if SMAPQualityFlagFilter=="no"
+
+            SMAPproduct_stacked.latitude=[];
+            SMAPproduct_stacked.longitude=[];
+            SMAPproduct_stacked.vegetation_opacity=[];
+            SMAPproduct_stacked.roughness_coefficient=[];
+            SMAPproduct_stacked.soil_moisture=[];
+            SMAPproduct_stacked.soil_moisture_error=[];
+            SMAPproduct_stacked.albedo=[];
+            SMAPproduct_stacked.vegetation_water_content=[];
+
+        elseif SMAPQualityFlagFilter=="yes"
+
+            SMAPproduct_stacked.Filtered_B0.latitude=[];
+            SMAPproduct_stacked.Filtered_B0.longitude=[];
+            SMAPproduct_stacked.Filtered_B0.vegetation_opacity=[];
+            SMAPproduct_stacked.Filtered_B0.roughness_coefficient=[];
+            SMAPproduct_stacked.Filtered_B0.soil_moisture=[];
+            SMAPproduct_stacked.Filtered_B0.soil_moisture_error=[];
+            SMAPproduct_stacked.Filtered_B0.albedo=[];
+            SMAPproduct_stacked.Filtered_B0.vegetation_water_content=[];
+
+            SMAPproduct_stacked.Filtered_B2.latitude=[];
+            SMAPproduct_stacked.Filtered_B2.longitude=[];
+            SMAPproduct_stacked.Filtered_B2.vegetation_opacity=[];
+            SMAPproduct_stacked.Filtered_B2.roughness_coefficient=[];
+            SMAPproduct_stacked.Filtered_B2.soil_moisture=[];
+            SMAPproduct_stacked.Filtered_B2.soil_moisture_error=[];
+            SMAPproduct_stacked.Filtered_B2.albedo=[];
+            SMAPproduct_stacked.Filtered_B2.vegetation_water_content=[];
+
+        end
     end
     
     
@@ -275,14 +295,18 @@ elseif processMode==2
     end
     
 
-    valid_dates = startDay:endDay;
 
     for i=1:nDyas
         
         
         disp(['day : ' datestr(valid_dates(i))]);
 
-        folder_path = fullfile(smap_path, string(valid_dates(i)), '\');
+        detail_date = datevec(valid_dates(i));
+        datae_yy = detail_date(:,1);
+        datae_mm = detail_date(:,2);
+        datae_dd = detail_date(:,3);
+        folder_path = fullfile(smap_path, string(datae_yy), '\', string(datae_mm), '\', string(datae_dd));
+
         files = dir(fullfile(folder_path, '*.h5'));
         file_name = files.name;
         file_path=fullfile(folder_path, '\', file_name);
@@ -358,15 +382,36 @@ elseif processMode==2
 
         elseif SMAP_resolution==36
 
-            SMAPproduct_stacked.latitude=[SMAPproduct_stacked.latitude; SMAPproduct_atResolution.latitude(:)];
-            SMAPproduct_stacked.longitude=[SMAPproduct_stacked.longitude; SMAPproduct_atResolution.longitude(:)];
-            SMAPproduct_stacked.roughness_coefficient=[SMAPproduct_stacked.roughness_coefficient; SMAPproduct_atResolution.roughness_coefficient(:)];
-            SMAPproduct_stacked.vegetation_opacity=[SMAPproduct_stacked.vegetation_opacity; SMAPproduct_atResolution.vegetation_opacity(:)];
-            SMAPproduct_stacked.soil_moisture=[SMAPproduct_stacked.soil_moisture; SMAPproduct_atResolution.soil_moisture(:)];
-            SMAPproduct_stacked.albedo=[SMAPproduct_stacked.albedo;SMAPproduct_atResolution.albedo(:)];
-            SMAPproduct_stacked.soil_moisture_error=[SMAPproduct_stacked.soil_moisture_error; SMAPproduct_atResolution.soil_moisture_error(:)];
-            SMAPproduct_stacked.vegetation_water_content=[SMAPproduct_stacked.vegetation_water_content;SMAPproduct_atResolution.vegetation_water_content(:)];
+            if SMAPQualityFlagFilter=="no"
+    
+                SMAPproduct_stacked.latitude=[SMAPproduct_stacked.latitude; SMAPproduct_atResolution.latitude(:)];
+                SMAPproduct_stacked.longitude=[SMAPproduct_stacked.longitude; SMAPproduct_atResolution.longitude(:)];
+                SMAPproduct_stacked.roughness_coefficient=[SMAPproduct_stacked.roughness_coefficient; SMAPproduct_atResolution.roughness_coefficient(:)];
+                SMAPproduct_stacked.vegetation_opacity=[SMAPproduct_stacked.vegetation_opacity; SMAPproduct_atResolution.vegetation_opacity(:)];
+                SMAPproduct_stacked.soil_moisture=[SMAPproduct_stacked.soil_moisture; SMAPproduct_atResolution.soil_moisture(:)];
+                SMAPproduct_stacked.albedo=[SMAPproduct_stacked.albedo;SMAPproduct_atResolution.albedo(:)];
+                SMAPproduct_stacked.soil_moisture_error=[SMAPproduct_stacked.soil_moisture_error; SMAPproduct_atResolution.soil_moisture_error(:)];
+                SMAPproduct_stacked.vegetation_water_content=[SMAPproduct_stacked.vegetation_water_content;SMAPproduct_atResolution.vegetation_water_content(:)];
 
+            elseif SMAPQualityFlagFilter=="yes"
+
+                SMAPproduct_stacked.Filtered_B0.latitude=[SMAPproduct_stacked.Filtered_B0.latitude; SMAPproduct_atResolution.Filtered_B0.latitude(:)];
+                SMAPproduct_stacked.Filtered_B0.longitude=[SMAPproduct_stacked.Filtered_B0.longitude; SMAPproduct_atResolution.Filtered_B0.longitude(:)];
+                SMAPproduct_stacked.Filtered_B0.roughness_coefficient=[SMAPproduct_stacked.Filtered_B0.roughness_coefficient; SMAPproduct_atResolution.Filtered_B0.roughness_coefficient(:)];
+                SMAPproduct_stacked.Filtered_B0.vegetation_opacity=[SMAPproduct_stacked.Filtered_B0.vegetation_opacity; SMAPproduct_atResolution.Filtered_B0.vegetation_opacity(:)];
+                SMAPproduct_stacked.Filtered_B0.soil_moisture=[SMAPproduct_stacked.Filtered_B0.soil_moisture; SMAPproduct_atResolution.Filtered_B0.soil_moisture(:)];
+                SMAPproduct_stacked.Filtered_B0.albedo=[SMAPproduct_stacked.Filtered_B0.albedo;SMAPproduct_atResolution.Filtered_B0.albedo(:)];
+                SMAPproduct_stacked.Filtered_B0.soil_moisture_error=[SMAPproduct_stacked.Filtered_B0.soil_moisture_error; SMAPproduct_atResolution.Filtered_B0.soil_moisture_error(:)];
+                SMAPproduct_stacked.Filtered_B0.vegetation_water_content=[SMAPproduct_stacked.Filtered_B0.vegetation_water_content;SMAPproduct_atResolution.Filtered_B0.vegetation_water_content(:)];
+
+                SMAPproduct_stacked.Filtered_B2.latitude=[SMAPproduct_stacked.Filtered_B2.latitude; SMAPproduct_atResolution.Filtered_B2.latitude(:)];
+                SMAPproduct_stacked.Filtered_B2.longitude=[SMAPproduct_stacked.Filtered_B2.longitude; SMAPproduct_atResolution.Filtered_B2.longitude(:)];
+                SMAPproduct_stacked.Filtered_B2.roughness_coefficient=[SMAPproduct_stacked.Filtered_B2.roughness_coefficient; SMAPproduct_atResolution.Filtered_B2.roughness_coefficient(:)];
+                SMAPproduct_stacked.Filtered_B2.vegetation_opacity=[SMAPproduct_stacked.Filtered_B2.vegetation_opacity; SMAPproduct_atResolution.Filtered_B2.vegetation_opacity(:)];
+                SMAPproduct_stacked.Filtered_B2.soil_moisture=[SMAPproduct_stacked.Filtered_B2.soil_moisture; SMAPproduct_atResolution.Filtered_B2.soil_moisture(:)];
+                SMAPproduct_stacked.Filtered_B2.albedo=[SMAPproduct_stacked.Filtered_B2.albedo;SMAPproduct_atResolution.Filtered_B2.albedo(:)];
+                SMAPproduct_stacked.Filtered_B2.soil_moisture_error=[SMAPproduct_stacked.Filtered_B2.soil_moisture_error; SMAPproduct_atResolution.Filtered_B2.soil_moisture_error(:)];
+                SMAPproduct_stacked.Filtered_B2.vegetation_water_content=[SMAPproduct_stacked.Filtered_B2.vegetation_water_content;SMAPproduct_atResolution.Filtered_B2.vegetation_water_content(:)];
         end
         %%%%%%
 
