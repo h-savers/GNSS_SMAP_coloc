@@ -1,10 +1,10 @@
 function CyGNSSproduct_atResolution = CyGNSS_process_mode1(Resolution, cygnss_data, cygnss_vars, doy_s, numcols, numrows)
 
-doy_all=cygnss_data.DoY;
+doy_all=cygnss_data.dayOfYear;
 index=find(doy_s==doy_all);
 read_vars=cell(size(cygnss_vars));
-splat = cygnss_data.SPLAT;
-splon = cygnss_data.SPLON;
+splat = cygnss_data.specularPointLat;
+splon = cygnss_data.specularPointLon;
 splon(splon==180)=179.66;
 splon(splon>180)=splon(splon>180)-360;
 [cygnss_c,cygnss_r]=easeconv_grid(splat(index),splon(index),Resolution);
@@ -26,22 +26,21 @@ for i=1:numel(cygnss_vars) % initialize the varibales in the structure
         newvar2 = [var char('_atRes')]; %to save after matrix size correction
         correct_matrix = NaN(numrows, numcols);
         
-        if string(var)=="QC" %check for quality flag which needs "computeFlag_mode_bitWise" function
+        if string(var)=="qualityFlags" || string(var)=="qualityFlags_2"%check for quality flag which needs "computeFlag_mode_bitWise" function
             eval([newvar '=accumarray([cygnss_r cygnss_c],(cell2mat(read_vars(i))),[],@computeFlag_mode_bitWise,-9999);']);
-            vars_after_accum{i} = eval(newvar); %to svae the read variables in a structure
-            [a,b] = size(vars_after_accum{i});
-            correct_matrix(1:a, 1:b) = cell2mat(vars_after_accum(i));
-            correct_matrix(correct_matrix==-9999)=NaN;
-            CyGNSS_product.(string(cygnss_vars(i))) = correct_matrix(:);
+
+        elseif string(var)=="notToBeUsed" || string(var)=="notRecommended"
+            eval([newvar '=accumarray([cygnss_r cygnss_c], cell2mat(read_vars(i)), [], @computeLogical_mode, -9999);']);
 
         else
-            eval([newvar ' = accumarray([cygnss_r cygnss_c],(cell2mat(read_vars(i))),[],@computemean,-9999);']);
-            vars_after_accum{i} = eval(newvar); %to svae the read variables in a structure
-            [a,b] = size(vars_after_accum{i});
-            correct_matrix(1:a, 1:b) = cell2mat(vars_after_accum(i));
-            correct_matrix(correct_matrix==-9999)=NaN;
-            CyGNSS_product.(string(cygnss_vars(i))) = correct_matrix(:);
+            eval([newvar ' = accumarray([cygnss_r cygnss_c],(double(cell2mat(read_vars(i)))),[],@computemean, -9999);']);
         end
+
+        vars_after_accum{i} = eval(newvar); %to svae the read variables in a structure
+        [a,b] = size(vars_after_accum{i});
+        correct_matrix(1:a, 1:b) = cell2mat(vars_after_accum(i));
+        correct_matrix(correct_matrix==-9999)=NaN;
+        CyGNSS_product.(string(cygnss_vars(i))) = correct_matrix(:);
 
     else
         eval([var ' =cygnss_data.(cygnss_vars{i});']);
