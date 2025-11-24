@@ -622,7 +622,7 @@ end
 
 %%%%%% saving the products %%%%%%%
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-name=(product_path + '\collocateddata_SS_check' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + '.mat');
+name=(product_path + '\collocateddata_SS_check' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
 save(name,'Target_Resolution', 'SMAPproduct_stacked', 'CyGNSS_stacked', '-v7.3');
 
 end
