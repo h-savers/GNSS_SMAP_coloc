@@ -9,6 +9,8 @@ resources/
 
 conf/configuration.cfg
 
+*.mat
+
 # Derived content-obscured files
 *.p
 
