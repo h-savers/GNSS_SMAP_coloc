@@ -8,6 +8,7 @@
 resources/
 
 conf/configuration.cfg
+conf/configuration_Hydro.cfg
 
 *.mat
 
