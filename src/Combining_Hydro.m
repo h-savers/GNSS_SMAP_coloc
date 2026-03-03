@@ -87,6 +87,8 @@ for i=1:nDays
     datae_dd = detail_date(:,3);
     folder_path = fullfile(smap_path, string(datae_yy), '\', string(datae_mm), '\', string(datae_dd));
 
+    doy = day(valid_dates(i),'dayofyear');
+
     files = dir(fullfile(folder_path, '*.h5'));
     file_name = files.name;
     file_path=fullfile(folder_path, '\', file_name);
@@ -174,14 +176,14 @@ for i=1:nDays
 
     if HydroGNSS_processing == "yes" % pre-process HydroGNSS data
 
-        HydroGNSSproduct_GPS_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, datae_dd, numcols, numrows);
+        HydroGNSSproduct_GPS_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
 
         %%%%%%populating the HydroGNSS products
         for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
             HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_GPS_atResolution.(string(HydroGNSS_vars(k)))];
         end
 
-        HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, datae_dd, numcols, numrows);
+        HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
 
         %%%%%%populating the HydroGNSS products
         for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
