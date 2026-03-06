@@ -1,5 +1,19 @@
 function Combining(configurationPath)
 
+close all
+clearvars -except  configurationPath
+ex=exist('configurationPath') ;
+if ex ==0
+    mode="GUI" ;
+    [configurationfile configurationPath] = uigetfile('../*.cfg', 'Select input configuration file') ; 
+    configurationPath= [ configurationPath configurationfile]  ; 
+else
+    if ~isfile(configurationPath)
+        throw(MException('INPUT:ERROR', "Cannot find configuration file. Please check the command line and try again."))
+    end
+    mode="input" ;
+end
+
 %%%%%%%%%%%%%%%%%% reading configuration file %%%%%%%%%%%%%%%%%%
 config = configFile.instance(configurationPath);
 
