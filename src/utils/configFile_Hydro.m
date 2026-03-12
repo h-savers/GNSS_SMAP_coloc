@@ -6,6 +6,7 @@ classdef configFile_Hydro < Singleton
         endDay
         Target_Resolution
         smap_path
+        modis_path
         hydro_file
         product_path
         SMAPQualityFlagFilter
@@ -64,6 +65,7 @@ classdef configFile_Hydro < Singleton
             obj.startDay = obj.get("startDay");
             obj.endDay = obj.get("endDay");
             obj.smap_path = obj.get("smap_path");
+            obj.modis_path = obj.get("modis_path");
             obj.hydro_file = obj.get("hydro_file");
             obj.product_path = obj.get("product_path");
             obj.SMAPQualityFlagFilter = obj.get("SMAPQualityFlagFilter");
@@ -71,6 +73,7 @@ classdef configFile_Hydro < Singleton
             obj.SMAP_resolution = str2num(obj.get("SMAP_resolution"));
 
             obj.check_path(fullfile(obj.smap_path), "dir")
+            obj.check_path(fullfile(obj.modis_path), "dir")
             obj.check_path(obj.hydro_file, "file");
             obj.check_path(obj.product_path, "dir");
 
