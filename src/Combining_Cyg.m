@@ -50,15 +50,6 @@ if processMode==1
 
         if SMAPQualityFlagFilter=="no"
 
-            SMAPproduct_stacked.nearest.latitude=[];
-            SMAPproduct_stacked.nearest.longitude=[];
-            SMAPproduct_stacked.nearest.vegetation_opacity=[];
-            SMAPproduct_stacked.nearest.roughness_coefficient=[];
-            SMAPproduct_stacked.nearest.soil_moisture=[];
-            SMAPproduct_stacked.nearest.soil_moisture_error=[];
-            SMAPproduct_stacked.nearest.albedo=[];
-            SMAPproduct_stacked.nearest.vegetation_water_content=[];
-    
             SMAPproduct_stacked.mean.latitude=[];
             SMAPproduct_stacked.mean.longitude=[];
             SMAPproduct_stacked.mean.vegetation_opacity=[];
@@ -70,15 +61,6 @@ if processMode==1
 
         elseif SMAPQualityFlagFilter=="yes"
 
-            SMAPproduct_stacked.Filtered_B0.nearest.latitude=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.longitude=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.albedo=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.vegetation_water_content=[];
-    
             SMAPproduct_stacked.Filtered_B0.mean.latitude=[];
             SMAPproduct_stacked.Filtered_B0.mean.longitude=[];
             SMAPproduct_stacked.Filtered_B0.mean.vegetation_opacity=[];
@@ -88,16 +70,6 @@ if processMode==1
             SMAPproduct_stacked.Filtered_B0.mean.albedo=[];
             SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content=[];
 
-
-            SMAPproduct_stacked.Filtered_B2.nearest.latitude=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.longitude=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.albedo=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.vegetation_water_content=[];
-    
             SMAPproduct_stacked.Filtered_B2.mean.latitude=[];
             SMAPproduct_stacked.Filtered_B2.mean.longitude=[];
             SMAPproduct_stacked.Filtered_B2.mean.vegetation_opacity=[];
@@ -181,15 +153,7 @@ if processMode==1
             if SMAPQualityFlagFilter=="no"
             
                 %%% filtered based on first bit
-                SMAPproduct_stacked.nearest.latitude=[SMAPproduct_stacked.nearest.latitude; SMAPproduct_atResolution.nearest.latitude(:)];
-                SMAPproduct_stacked.nearest.longitude=[SMAPproduct_stacked.nearest.longitude; SMAPproduct_atResolution.nearest.longitude(:)];
-                SMAPproduct_stacked.nearest.roughness_coefficient=[SMAPproduct_stacked.nearest.roughness_coefficient; SMAPproduct_atResolution.nearest.roughness_coefficient(:)];
-                SMAPproduct_stacked.nearest.vegetation_opacity=[SMAPproduct_stacked.nearest.vegetation_opacity; SMAPproduct_atResolution.nearest.vegetation_opacity(:)];
-                SMAPproduct_stacked.nearest.soil_moisture=[SMAPproduct_stacked.nearest.soil_moisture; SMAPproduct_atResolution.nearest.soil_moisture(:)];
-                SMAPproduct_stacked.nearest.albedo=[SMAPproduct_stacked.nearest.albedo;SMAPproduct_atResolution.nearest.albedo(:)];
-                SMAPproduct_stacked.nearest.soil_moisture_error=[SMAPproduct_stacked.nearest.soil_moisture_error; SMAPproduct_atResolution.nearest.soil_moisture_error(:)];
-                SMAPproduct_stacked.nearest.vegetation_water_content=[SMAPproduct_stacked.nearest.vegetation_water_content;SMAPproduct_atResolution.nearest.vegetation_water_content(:)];
-    
+
                 SMAPproduct_stacked.mean.latitude=[SMAPproduct_stacked.mean.latitude; SMAPproduct_atResolution.mean.latitude(:)];
                 SMAPproduct_stacked.mean.longitude=[SMAPproduct_stacked.mean.longitude; SMAPproduct_atResolution.mean.longitude(:)];
                 SMAPproduct_stacked.mean.roughness_coefficient=[SMAPproduct_stacked.mean.roughness_coefficient; SMAPproduct_atResolution.mean.roughness_coefficient(:)];
@@ -202,15 +166,7 @@ if processMode==1
             elseif SMAPQualityFlagFilter=="yes"
 
                 %%% filtered based on first bit
-                SMAPproduct_stacked.Filtered_B0.nearest.latitude=[SMAPproduct_stacked.Filtered_B0.nearest.latitude; SMAPproduct_atResolution.Filtered_B0.nearest.latitude(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.longitude=[SMAPproduct_stacked.Filtered_B0.nearest.longitude; SMAPproduct_atResolution.Filtered_B0.nearest.longitude(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.roughness_coefficient=[SMAPproduct_stacked.Filtered_B0.nearest.roughness_coefficient; SMAPproduct_atResolution.Filtered_B0.nearest.roughness_coefficient(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.vegetation_opacity=[SMAPproduct_stacked.Filtered_B0.nearest.vegetation_opacity; SMAPproduct_atResolution.Filtered_B0.nearest.vegetation_opacity(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture=[SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture; SMAPproduct_atResolution.Filtered_B0.nearest.soil_moisture(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.albedo=[SMAPproduct_stacked.Filtered_B0.nearest.albedo;SMAPproduct_atResolution.Filtered_B0.nearest.albedo(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture_error=[SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture_error; SMAPproduct_atResolution.Filtered_B0.nearest.soil_moisture_error(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.vegetation_water_content=[SMAPproduct_stacked.Filtered_B0.nearest.vegetation_water_content;SMAPproduct_atResolution.Filtered_B0.nearest.vegetation_water_content(:)];
-    
+                
                 SMAPproduct_stacked.Filtered_B0.mean.latitude=[SMAPproduct_stacked.Filtered_B0.mean.latitude; SMAPproduct_atResolution.Filtered_B0.mean.latitude(:)];
                 SMAPproduct_stacked.Filtered_B0.mean.longitude=[SMAPproduct_stacked.Filtered_B0.mean.longitude; SMAPproduct_atResolution.Filtered_B0.mean.longitude(:)];
                 SMAPproduct_stacked.Filtered_B0.mean.roughness_coefficient=[SMAPproduct_stacked.Filtered_B0.mean.roughness_coefficient; SMAPproduct_atResolution.Filtered_B0.mean.roughness_coefficient(:)];
@@ -221,15 +177,7 @@ if processMode==1
                 SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content=[SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content;SMAPproduct_atResolution.Filtered_B0.mean.vegetation_water_content(:)];
 
                 %%% filtered based on third bit
-                SMAPproduct_stacked.Filtered_B2.nearest.latitude=[SMAPproduct_stacked.Filtered_B2.nearest.latitude; SMAPproduct_atResolution.Filtered_B2.nearest.latitude(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.longitude=[SMAPproduct_stacked.Filtered_B2.nearest.longitude; SMAPproduct_atResolution.Filtered_B2.nearest.longitude(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.roughness_coefficient=[SMAPproduct_stacked.Filtered_B2.nearest.roughness_coefficient; SMAPproduct_atResolution.Filtered_B2.nearest.roughness_coefficient(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.vegetation_opacity=[SMAPproduct_stacked.Filtered_B2.nearest.vegetation_opacity; SMAPproduct_atResolution.Filtered_B2.nearest.vegetation_opacity(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture=[SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture; SMAPproduct_atResolution.Filtered_B2.nearest.soil_moisture(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.albedo=[SMAPproduct_stacked.Filtered_B2.nearest.albedo;SMAPproduct_atResolution.Filtered_B2.nearest.albedo(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture_error=[SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture_error; SMAPproduct_atResolution.Filtered_B2.nearest.soil_moisture_error(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.vegetation_water_content=[SMAPproduct_stacked.Filtered_B2.nearest.vegetation_water_content;SMAPproduct_atResolution.Filtered_B2.nearest.vegetation_water_content(:)];
-    
+                
                 SMAPproduct_stacked.Filtered_B2.mean.latitude=[SMAPproduct_stacked.Filtered_B2.mean.latitude; SMAPproduct_atResolution.Filtered_B2.mean.latitude(:)];
                 SMAPproduct_stacked.Filtered_B2.mean.longitude=[SMAPproduct_stacked.Filtered_B2.mean.longitude; SMAPproduct_atResolution.Filtered_B2.mean.longitude(:)];
                 SMAPproduct_stacked.Filtered_B2.mean.roughness_coefficient=[SMAPproduct_stacked.Filtered_B2.mean.roughness_coefficient; SMAPproduct_atResolution.Filtered_B2.mean.roughness_coefficient(:)];
@@ -334,15 +282,7 @@ elseif processMode==2
 
         if SMAPQualityFlagFilter=="no"
 
-            SMAPproduct_stacked.nearest.latitude=[];
-            SMAPproduct_stacked.nearest.longitude=[];
-            SMAPproduct_stacked.nearest.vegetation_opacity=[];
-            SMAPproduct_stacked.nearest.roughness_coefficient=[];
-            SMAPproduct_stacked.nearest.soil_moisture=[];
-            SMAPproduct_stacked.nearest.soil_moisture_error=[];
-            SMAPproduct_stacked.nearest.albedo=[];
-            SMAPproduct_stacked.nearest.vegetation_water_content=[];
-    
+
             SMAPproduct_stacked.mean.latitude=[];
             SMAPproduct_stacked.mean.longitude=[];
             SMAPproduct_stacked.mean.vegetation_opacity=[];
@@ -353,15 +293,6 @@ elseif processMode==2
             SMAPproduct_stacked.mean.vegetation_water_content=[];
 
         elseif SMAPQualityFlagFilter=="yes"
-
-            SMAPproduct_stacked.Filtered_B0.nearest.latitude=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.longitude=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.albedo=[];
-            SMAPproduct_stacked.Filtered_B0.nearest.vegetation_water_content=[];
     
             SMAPproduct_stacked.Filtered_B0.mean.latitude=[];
             SMAPproduct_stacked.Filtered_B0.mean.longitude=[];
@@ -371,16 +302,6 @@ elseif processMode==2
             SMAPproduct_stacked.Filtered_B0.mean.soil_moisture_error=[];
             SMAPproduct_stacked.Filtered_B0.mean.albedo=[];
             SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content=[];
-
-
-            SMAPproduct_stacked.Filtered_B2.nearest.latitude=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.longitude=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.albedo=[];
-            SMAPproduct_stacked.Filtered_B2.nearest.vegetation_water_content=[];
     
             SMAPproduct_stacked.Filtered_B2.mean.latitude=[];
             SMAPproduct_stacked.Filtered_B2.mean.longitude=[];
@@ -473,15 +394,7 @@ elseif processMode==2
             if SMAPQualityFlagFilter=="no"
             
                 %%% filtered based on first bit
-                SMAPproduct_stacked.nearest.latitude=[SMAPproduct_stacked.nearest.latitude; SMAPproduct_atResolution.nearest.latitude(:)];
-                SMAPproduct_stacked.nearest.longitude=[SMAPproduct_stacked.nearest.longitude; SMAPproduct_atResolution.nearest.longitude(:)];
-                SMAPproduct_stacked.nearest.roughness_coefficient=[SMAPproduct_stacked.nearest.roughness_coefficient; SMAPproduct_atResolution.nearest.roughness_coefficient(:)];
-                SMAPproduct_stacked.nearest.vegetation_opacity=[SMAPproduct_stacked.nearest.vegetation_opacity; SMAPproduct_atResolution.nearest.vegetation_opacity(:)];
-                SMAPproduct_stacked.nearest.soil_moisture=[SMAPproduct_stacked.nearest.soil_moisture; SMAPproduct_atResolution.nearest.soil_moisture(:)];
-                SMAPproduct_stacked.nearest.albedo=[SMAPproduct_stacked.nearest.albedo;SMAPproduct_atResolution.nearest.albedo(:)];
-                SMAPproduct_stacked.nearest.soil_moisture_error=[SMAPproduct_stacked.nearest.soil_moisture_error; SMAPproduct_atResolution.nearest.soil_moisture_error(:)];
-                SMAPproduct_stacked.nearest.vegetation_water_content=[SMAPproduct_stacked.nearest.vegetation_water_content;SMAPproduct_atResolution.nearest.vegetation_water_content(:)];
-    
+
                 SMAPproduct_stacked.mean.latitude=[SMAPproduct_stacked.mean.latitude; SMAPproduct_atResolution.mean.latitude(:)];
                 SMAPproduct_stacked.mean.longitude=[SMAPproduct_stacked.mean.longitude; SMAPproduct_atResolution.mean.longitude(:)];
                 SMAPproduct_stacked.mean.roughness_coefficient=[SMAPproduct_stacked.mean.roughness_coefficient; SMAPproduct_atResolution.mean.roughness_coefficient(:)];
@@ -494,15 +407,7 @@ elseif processMode==2
             elseif SMAPQualityFlagFilter=="yes"
 
                 %%% filtered based on first bit
-                SMAPproduct_stacked.Filtered_B0.nearest.latitude=[SMAPproduct_stacked.Filtered_B0.nearest.latitude; SMAPproduct_atResolution.Filtered_B0.nearest.latitude(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.longitude=[SMAPproduct_stacked.Filtered_B0.nearest.longitude; SMAPproduct_atResolution.Filtered_B0.nearest.longitude(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.roughness_coefficient=[SMAPproduct_stacked.Filtered_B0.nearest.roughness_coefficient; SMAPproduct_atResolution.Filtered_B0.nearest.roughness_coefficient(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.vegetation_opacity=[SMAPproduct_stacked.Filtered_B0.nearest.vegetation_opacity; SMAPproduct_atResolution.Filtered_B0.nearest.vegetation_opacity(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture=[SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture; SMAPproduct_atResolution.Filtered_B0.nearest.soil_moisture(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.albedo=[SMAPproduct_stacked.Filtered_B0.nearest.albedo;SMAPproduct_atResolution.Filtered_B0.nearest.albedo(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture_error=[SMAPproduct_stacked.Filtered_B0.nearest.soil_moisture_error; SMAPproduct_atResolution.Filtered_B0.nearest.soil_moisture_error(:)];
-                SMAPproduct_stacked.Filtered_B0.nearest.vegetation_water_content=[SMAPproduct_stacked.Filtered_B0.nearest.vegetation_water_content;SMAPproduct_atResolution.Filtered_B0.nearest.vegetation_water_content(:)];
-    
+
                 SMAPproduct_stacked.Filtered_B0.mean.latitude=[SMAPproduct_stacked.Filtered_B0.mean.latitude; SMAPproduct_atResolution.Filtered_B0.mean.latitude(:)];
                 SMAPproduct_stacked.Filtered_B0.mean.longitude=[SMAPproduct_stacked.Filtered_B0.mean.longitude; SMAPproduct_atResolution.Filtered_B0.mean.longitude(:)];
                 SMAPproduct_stacked.Filtered_B0.mean.roughness_coefficient=[SMAPproduct_stacked.Filtered_B0.mean.roughness_coefficient; SMAPproduct_atResolution.Filtered_B0.mean.roughness_coefficient(:)];
@@ -513,15 +418,7 @@ elseif processMode==2
                 SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content=[SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content;SMAPproduct_atResolution.Filtered_B0.mean.vegetation_water_content(:)];
 
                 %%% filtered based on third bit
-                SMAPproduct_stacked.Filtered_B2.nearest.latitude=[SMAPproduct_stacked.Filtered_B2.nearest.latitude; SMAPproduct_atResolution.Filtered_B2.nearest.latitude(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.longitude=[SMAPproduct_stacked.Filtered_B2.nearest.longitude; SMAPproduct_atResolution.Filtered_B2.nearest.longitude(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.roughness_coefficient=[SMAPproduct_stacked.Filtered_B2.nearest.roughness_coefficient; SMAPproduct_atResolution.Filtered_B2.nearest.roughness_coefficient(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.vegetation_opacity=[SMAPproduct_stacked.Filtered_B2.nearest.vegetation_opacity; SMAPproduct_atResolution.Filtered_B2.nearest.vegetation_opacity(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture=[SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture; SMAPproduct_atResolution.Filtered_B2.nearest.soil_moisture(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.albedo=[SMAPproduct_stacked.Filtered_B2.nearest.albedo;SMAPproduct_atResolution.Filtered_B2.nearest.albedo(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture_error=[SMAPproduct_stacked.Filtered_B2.nearest.soil_moisture_error; SMAPproduct_atResolution.Filtered_B2.nearest.soil_moisture_error(:)];
-                SMAPproduct_stacked.Filtered_B2.nearest.vegetation_water_content=[SMAPproduct_stacked.Filtered_B2.nearest.vegetation_water_content;SMAPproduct_atResolution.Filtered_B2.nearest.vegetation_water_content(:)];
-    
+
                 SMAPproduct_stacked.Filtered_B2.mean.latitude=[SMAPproduct_stacked.Filtered_B2.mean.latitude; SMAPproduct_atResolution.Filtered_B2.mean.latitude(:)];
                 SMAPproduct_stacked.Filtered_B2.mean.longitude=[SMAPproduct_stacked.Filtered_B2.mean.longitude; SMAPproduct_atResolution.Filtered_B2.mean.longitude(:)];
                 SMAPproduct_stacked.Filtered_B2.mean.roughness_coefficient=[SMAPproduct_stacked.Filtered_B2.mean.roughness_coefficient; SMAPproduct_atResolution.Filtered_B2.mean.roughness_coefficient(:)];
