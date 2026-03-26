@@ -269,54 +269,60 @@ for i=1:nDays
         end
     
         % ---------- process filtered data ----------
+        
+        %%% convert SNR to linear before gridding
+        HydroGNSS_GPS_data.SNR_1_L = 10.^(HydroGNSS_GPS_data.SNR_1_L/10);
+        HydroGNSS_GPS_data.SNR_1_R = 10.^(HydroGNSS_GPS_data.SNR_1_R/10);
+        HydroGNSS_GPS_data.SNR_5_L = 10.^(HydroGNSS_GPS_data.SNR_5_L/10);
+        HydroGNSS_GPS_data.SNR_5_R = 10.^(HydroGNSS_GPS_data.SNR_5_R/10);
+
+        HydroGNSS_Galileo_data.SNR_1_L = 10.^(HydroGNSS_Galileo_data.SNR_1_L/10);
+        HydroGNSS_Galileo_data.SNR_1_R = 10.^(HydroGNSS_Galileo_data.SNR_1_R/10);
+        HydroGNSS_Galileo_data.SNR_5_L = 10.^(HydroGNSS_Galileo_data.SNR_5_L/10);
+        HydroGNSS_Galileo_data.SNR_5_R = 10.^(HydroGNSS_Galileo_data.SNR_5_R/10);
+        %%%
+
+        %%% collocate to the target resolution
         HydroGNSSproduct_GPS_atResolution = HydroGNSS_process( ...
             Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
-    
+
+        HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
+            Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
+        %%%
+        
+        %%% convert SNR to dB after gridding
+        HydroGNSSproduct_GPS_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_L);
+        HydroGNSSproduct_GPS_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_R);
+        HydroGNSSproduct_GPS_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_L);
+        HydroGNSSproduct_GPS_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_R);
+
+        HydroGNSSproduct_Galileo_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_L);
+        HydroGNSSproduct_Galileo_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_R);
+        HydroGNSSproduct_Galileo_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_L);
+        HydroGNSSproduct_Galileo_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_R);
+        %%%
+
+        %%% stacking collocated data
         for k = 1:numel(HydroGNSS_vars)
             varName = string(HydroGNSS_vars(k));
             HydroGNSS_GPS_stacked.(varName) = ...
                 [HydroGNSS_GPS_stacked.(varName); HydroGNSSproduct_GPS_atResolution.(varName)];
         end
-    
-        HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
-            Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
-    
+
         for k = 1:numel(HydroGNSS_vars)
             varName = string(HydroGNSS_vars(k));
             HydroGNSS_Galileo_stacked.(varName) = ...
                 [HydroGNSS_Galileo_stacked.(varName); HydroGNSSproduct_Galileo_atResolution.(varName)];
         end
-    
-    
-    
-
-
-% %         HydroGNSSproduct_GPS_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
-% % 
-% %         %%%%%%populating the HydroGNSS products
-% %         for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
-% %             HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_GPS_atResolution.(string(HydroGNSS_vars(k)))];
-% %         end
-% % 
-% %         HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
-% % 
-% %         %%%%%%populating the HydroGNSS products
-% %         for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
-% %             HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_Galileo_atResolution.(string(HydroGNSS_vars(k)))];
-% %         end
-
-
+        %%%
     end
 
 end % end of reading all days
 
 %%%%%%%%%%%%%% Masking to get all HydroGNSS data (at the moment only for 25km resolution) %%%%%%%%%%%%%%%
 temp_days = HydroGNSS_Galileo_stacked.dayOfYear;
-temp_days = temp_days(~isnan(temp_days));
-temp_days = unique(temp_days);
-firstDay = temp_days(1);
-lastDay = temp_days(end);
-nDays = lastDay-firstDay+1;
+temp_days = unique(temp_days(~isnan(temp_days)));
+nDays = numel(temp_days);
 
 if HydroGNSS_processing=="yes"
 
@@ -345,9 +351,8 @@ if HydroGNSS_processing=="yes"
     end
 end
 
-
-
-
+firstDay = day(startDay, 'dayofyear');
+lastDay = day(endDay, 'dayofyear');
 
 %%%%%% saving the products %%%%%%%
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
