@@ -80,11 +80,11 @@ if HydroGNSS_processing=="yes"
         HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(i)))=[];
         
         if HydroGNSS_vars(i)=="timeUTC"
-            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaT;
-            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaT;
+            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaT;
+            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaT;
         else
-            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaN;
-            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaN;
+            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaN;
+            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaN;
         end
     end
 end
@@ -208,19 +208,102 @@ for i=1:nDays
 
     if HydroGNSS_processing == "yes" % pre-process HydroGNSS data
 
-        HydroGNSSproduct_GPS_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
-
-        %%%%%%populating the HydroGNSS products
-        for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
-            HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_GPS_atResolution.(string(HydroGNSS_vars(k)))];
+        % ---------- variable-specific masking ----------
+        suffixes = ["_1_L","_1_R","_5_L","_5_R"];
+        
+        % ---- incidence angle: only mask incidence_angle itself ----
+        if isfield(HydroGNSS_GPS_data, 'incidenceAngleDeg')
+            idx = HydroGNSS_GPS_data.incidenceAngleDeg > 50;
+            HydroGNSS_GPS_data.incidenceAngleDeg(idx) = NaN;
         end
-
-        HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
-
-        %%%%%%populating the HydroGNSS products
-        for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
-            HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_Galileo_atResolution.(string(HydroGNSS_vars(k)))];
+        
+        if isfield(HydroGNSS_Galileo_data, 'incidenceAngleDeg')
+            idx = HydroGNSS_Galileo_data.incidenceAngleDeg > 50;
+            HydroGNSS_Galileo_data.incidenceAngleDeg(idx) = NaN;
         end
+        
+        % ---- SNR and Reflectivity: only mask the related variable ----
+        for s = 1:numel(suffixes)
+            suf = suffixes(s);
+        
+            snrField  = "SNR" + suf;
+            reflField = "reflectivityLinear" + suf;
+        
+            % ===== GPS =====
+            if isfield(HydroGNSS_GPS_data, snrField)
+                idx = HydroGNSS_GPS_data.(snrField) < 0.5;
+                HydroGNSS_GPS_data.(snrField)(idx) = NaN;
+            end
+        
+            if isfield(HydroGNSS_GPS_data, reflField)
+                refl_lin = HydroGNSS_GPS_data.(reflField);
+        
+                idx = false(size(refl_lin));
+                valid_lin = refl_lin > 0;
+                idx(valid_lin) = 10*log10(refl_lin(valid_lin)) < -45 | 10*log10(refl_lin(valid_lin)) > 0;
+        
+                % also mask non-positive reflectivity
+                idx = idx | (refl_lin <= 0);
+        
+                HydroGNSS_GPS_data.(reflField)(idx) = NaN;
+            end
+        
+            % ===== Galileo =====
+            if isfield(HydroGNSS_Galileo_data, snrField)
+                idx = HydroGNSS_Galileo_data.(snrField) < 0.5;
+                HydroGNSS_Galileo_data.(snrField)(idx) = NaN;
+            end
+        
+            if isfield(HydroGNSS_Galileo_data, reflField)
+                refl_lin = HydroGNSS_Galileo_data.(reflField);
+        
+                idx = false(size(refl_lin));
+                valid_lin = refl_lin > 0;
+                idx(valid_lin) = 10*log10(refl_lin(valid_lin)) < -45 | 10*log10(refl_lin(valid_lin)) > 0;
+        
+                % also mask non-positive reflectivity
+                idx = idx | (refl_lin <= 0);
+        
+                HydroGNSS_Galileo_data.(reflField)(idx) = NaN;
+            end
+        end
+    
+        % ---------- process filtered data ----------
+        HydroGNSSproduct_GPS_atResolution = HydroGNSS_process( ...
+            Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
+    
+        for k = 1:numel(HydroGNSS_vars)
+            varName = string(HydroGNSS_vars(k));
+            HydroGNSS_GPS_stacked.(varName) = ...
+                [HydroGNSS_GPS_stacked.(varName); HydroGNSSproduct_GPS_atResolution.(varName)];
+        end
+    
+        HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
+            Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
+    
+        for k = 1:numel(HydroGNSS_vars)
+            varName = string(HydroGNSS_vars(k));
+            HydroGNSS_Galileo_stacked.(varName) = ...
+                [HydroGNSS_Galileo_stacked.(varName); HydroGNSSproduct_Galileo_atResolution.(varName)];
+        end
+    
+    
+    
+
+
+% %         HydroGNSSproduct_GPS_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
+% % 
+% %         %%%%%%populating the HydroGNSS products
+% %         for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
+% %             HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_GPS_atResolution.(string(HydroGNSS_vars(k)))];
+% %         end
+% % 
+% %         HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process(Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
+% % 
+% %         %%%%%%populating the HydroGNSS products
+% %         for k=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
+% %             HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = [HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))); HydroGNSSproduct_Galileo_atResolution.(string(HydroGNSS_vars(k)))];
+% %         end
 
 
     end
