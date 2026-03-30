@@ -13,15 +13,24 @@ SMAPQualityFlagFilter = config.SMAPQualityFlagFilter;
 
 Target_Resolution = config.Target_Resolution;
 smap_path = config.smap_path;
+modis_path = config.modis_path;
 CyGNSS_processing = config.CyGNSS_processing; % if yes the CyGNSS data is also processed
 product_path = config.product_path;
 SMAP_resolution = config.SMAP_resolution;
 
 %%% preparing row/col from lat/lon for accumarray for 25km resolution
+%%% SMAP
 load("LatLon_SMAP_9km.mat");
 [longitude_a2, latitude_a2] = meshgrid(longitude_a, latitude_a);
 [sm_c,sm_r]=easeconv_grid(latitude_a2,longitude_a2,25);
 %%%
+%%% MODIS
+load("lat_lon_modis.mat")
+lon_modis=lon_modis+0.025;lat_modis=lat_modis-0.025;
+lat_modis((lat_modis>=85))=85;lat_modis(lat_modis<=-85)=-85;
+lat_modis=repmat(lat_modis,[1,7200]);
+lon_modis=repmat(lon_modis,[3600,1]);
+[modis_c,modis_r]=easeconv_grid(lat_modis,lon_modis,25);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if Target_Resolution==36
@@ -46,77 +55,13 @@ if processMode==1
     detail_dates = datevec(valid_dates);
     nDays = length(valid_dates);
     
-    if SMAP_resolution==9
-
-        if SMAPQualityFlagFilter=="no"
-
-            SMAPproduct_stacked.mean.latitude=[];
-            SMAPproduct_stacked.mean.longitude=[];
-            SMAPproduct_stacked.mean.vegetation_opacity=[];
-            SMAPproduct_stacked.mean.roughness_coefficient=[];
-            SMAPproduct_stacked.mean.soil_moisture=[];
-            SMAPproduct_stacked.mean.soil_moisture_error=[];
-            SMAPproduct_stacked.mean.albedo=[];
-            SMAPproduct_stacked.mean.vegetation_water_content=[];
-
-        elseif SMAPQualityFlagFilter=="yes"
-
-            SMAPproduct_stacked.Filtered_B0.mean.latitude=[];
-            SMAPproduct_stacked.Filtered_B0.mean.longitude=[];
-            SMAPproduct_stacked.Filtered_B0.mean.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B0.mean.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B0.mean.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B0.mean.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B0.mean.albedo=[];
-            SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content=[];
-
-            SMAPproduct_stacked.Filtered_B2.mean.latitude=[];
-            SMAPproduct_stacked.Filtered_B2.mean.longitude=[];
-            SMAPproduct_stacked.Filtered_B2.mean.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B2.mean.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B2.mean.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B2.mean.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B2.mean.albedo=[];
-            SMAPproduct_stacked.Filtered_B2.mean.vegetation_water_content=[];
-
-        end
-
-    elseif SMAP_resolution==36
-        
-        if SMAPQualityFlagFilter=="no"
-
-            SMAPproduct_stacked.latitude=[];
-            SMAPproduct_stacked.longitude=[];
-            SMAPproduct_stacked.vegetation_opacity=[];
-            SMAPproduct_stacked.roughness_coefficient=[];
-            SMAPproduct_stacked.soil_moisture=[];
-            SMAPproduct_stacked.soil_moisture_error=[];
-            SMAPproduct_stacked.albedo=[];
-            SMAPproduct_stacked.vegetation_water_content=[];
-
-        elseif SMAPQualityFlagFilter=="yes"
-
-            SMAPproduct_stacked.Filtered_B0.latitude=[];
-            SMAPproduct_stacked.Filtered_B0.longitude=[];
-            SMAPproduct_stacked.Filtered_B0.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B0.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B0.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B0.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B0.albedo=[];
-            SMAPproduct_stacked.Filtered_B0.vegetation_water_content=[];
-
-            SMAPproduct_stacked.Filtered_B2.latitude=[];
-            SMAPproduct_stacked.Filtered_B2.longitude=[];
-            SMAPproduct_stacked.Filtered_B2.vegetation_opacity=[];
-            SMAPproduct_stacked.Filtered_B2.roughness_coefficient=[];
-            SMAPproduct_stacked.Filtered_B2.soil_moisture=[];
-            SMAPproduct_stacked.Filtered_B2.soil_moisture_error=[];
-            SMAPproduct_stacked.Filtered_B2.albedo=[];
-            SMAPproduct_stacked.Filtered_B2.vegetation_water_content=[];
-
-        end
-    end
+    %%%% Initializing the vectors
+    SMAPproduct_stacked = initialize_SMAPproduct_stacked(SMAP_resolution, SMAPQualityFlagFilter);
     
+    MODISproduct_stacked.Modis_ndvi = [];
+    MODISproduct_stacked.Modis_ndwi = [];
+    MODISproduct_stacked.Modis_LST_ave = [];
+    MODISproduct_stacked.Modis_LST_dif = [];
     
     if CyGNSS_processing=="yes" 
         cygnss_data = load(config.cygnss_file); %load data
@@ -143,22 +88,22 @@ if processMode==1
         datae_dd = detail_date(:,3);
 
         %%%%% modis process
-% %         folder_path_MOD09CMG = fullfile(modis_path, 'MOD09CMG', string(datae_yy), string(datae_mm), string(datae_dd));
-% %         files_MOD09CMG = dir(fullfile(folder_path_MOD09CMG, '*.hdf'));
-% %         file_name_MOD09CMG = files_MOD09CMG.name;
-% %         file_path_MOD09CMG=fullfile(folder_path_MOD09CMG, file_name_MOD09CMG);
-% %     
-% %         folder_path_MOD11C1 = fullfile(modis_path, 'MOD11C1', string(datae_yy), string(datae_mm), string(datae_dd));
-% %         files_MOD11C1 = dir(fullfile(folder_path_MOD11C1, '*.hdf'));
-% %         file_name_MOD11C1 = files_MOD11C1.name;
-% %         file_path_MOD11C1=fullfile(folder_path_MOD11C1, file_name_MOD11C1);
-% %     
-% %         MODISproduct_atResolution=MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
-% %         
-% %         MODISproduct_stacked.Modis_ndvi = [MODISproduct_stacked.Modis_ndvi; MODISproduct_atResolution.Modis_ndvi];
-% %         MODISproduct_stacked.Modis_ndwi = [MODISproduct_stacked.Modis_ndwi; MODISproduct_atResolution.Modis_ndwi];
-% %         MODISproduct_stacked.Modis_LST_ave = [MODISproduct_stacked.Modis_LST_ave; MODISproduct_atResolution.Modis_LST_ave];
-% %         MODISproduct_stacked.Modis_LST_dif = [MODISproduct_stacked.Modis_LST_dif; MODISproduct_atResolution.Modis_LST_dif];
+        folder_path_MOD09CMG = fullfile(modis_path, 'MOD09CMG', string(datae_yy), string(datae_mm), string(datae_dd));
+        files_MOD09CMG = dir(fullfile(folder_path_MOD09CMG, '*.hdf'));
+        file_name_MOD09CMG = files_MOD09CMG.name;
+        file_path_MOD09CMG=fullfile(folder_path_MOD09CMG, file_name_MOD09CMG);
+    
+        folder_path_MOD11C1 = fullfile(modis_path, 'MOD11C1', string(datae_yy), string(datae_mm), string(datae_dd));
+        files_MOD11C1 = dir(fullfile(folder_path_MOD11C1, '*.hdf'));
+        file_name_MOD11C1 = files_MOD11C1.name;
+        file_path_MOD11C1=fullfile(folder_path_MOD11C1, file_name_MOD11C1);
+    
+        MODISproduct_atResolution=MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+        
+        MODISproduct_stacked.Modis_ndvi = [MODISproduct_stacked.Modis_ndvi; MODISproduct_atResolution.Modis_ndvi];
+        MODISproduct_stacked.Modis_ndwi = [MODISproduct_stacked.Modis_ndwi; MODISproduct_atResolution.Modis_ndwi];
+        MODISproduct_stacked.Modis_LST_ave = [MODISproduct_stacked.Modis_LST_ave; MODISproduct_atResolution.Modis_LST_ave];
+        MODISproduct_stacked.Modis_LST_dif = [MODISproduct_stacked.Modis_LST_dif; MODISproduct_atResolution.Modis_LST_dif];
         
         %%%%% smap process
         folder_path = fullfile(smap_path, string(datae_yy), '\', string(datae_mm), '\', string(datae_dd));
@@ -570,6 +515,6 @@ end
 %%%%%% saving the products %%%%%%%
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
 name=(product_path + '\collocateddata_CYGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
-save(name,'Target_Resolution', 'SMAPproduct_stacked', 'CyGNSS_stacked', '-v7.3');
+save(name,'Target_Resolution', 'SMAPproduct_stacked', 'MODISproduct_stacked', 'CyGNSS_stacked', '-v7.3');
 
 end

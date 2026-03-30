@@ -356,7 +356,7 @@ lastDay = day(endDay, 'dayofyear');
 
 %%%%%% saving the products %%%%%%%
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-name=(product_path + '\collocated_data_Hydro' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
+name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
 save(name,'Target_Resolution', 'SMAPproduct_stacked', 'MODISproduct_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
 
 end

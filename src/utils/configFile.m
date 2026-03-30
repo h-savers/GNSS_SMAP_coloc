@@ -7,6 +7,7 @@ classdef configFile < Singleton
         endDay
         Target_Resolution
         smap_path
+        modis_path
         cygnss_path
         cygnss_file
         product_path
@@ -67,6 +68,7 @@ classdef configFile < Singleton
             obj.startDay = obj.get("startDay");
             obj.endDay = obj.get("endDay");
             obj.smap_path = obj.get("smap_path");
+            obj.modis_path = obj.get("modis_path");
             obj.cygnss_path = obj.get("cygnss_path");
             obj.cygnss_file = obj.get("cygnss_file");
             obj.product_path = obj.get("product_path");
@@ -75,6 +77,7 @@ classdef configFile < Singleton
             obj.SMAP_resolution = str2num(obj.get("SMAP_resolution"));
 
             obj.check_path(fullfile(obj.smap_path), "dir")
+            obj.check_path(fullfile(obj.modis_path), "dir")
             obj.check_path(fullfile(obj.cygnss_path), "dir")
             obj.check_path(obj.cygnss_file, "file");
             obj.check_path(obj.product_path, "dir");
