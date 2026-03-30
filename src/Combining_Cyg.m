@@ -120,6 +120,8 @@ if processMode==1
     
     if CyGNSS_processing=="yes" 
         cygnss_data = load(config.cygnss_file); %load data
+        cygnss_data.dayOfYear = day(cygnss_data.timeUTC, 'dayofyear');
+        cygnss_data = rmfield(cygnss_data, 'constellation');
         cygnss_vars = fieldnames(cygnss_data);
     
         CyGNSS_stacked=struct;
@@ -135,9 +137,30 @@ if processMode==1
         disp(['day : ' datestr(valid_dates(i))]);
 
         detail_date = datevec(valid_dates(i));
+        doy_s = day(valid_dates(i),'dayofyear');
         datae_yy = detail_date(:,1);
         datae_mm = detail_date(:,2);
         datae_dd = detail_date(:,3);
+
+        %%%%% modis process
+% %         folder_path_MOD09CMG = fullfile(modis_path, 'MOD09CMG', string(datae_yy), string(datae_mm), string(datae_dd));
+% %         files_MOD09CMG = dir(fullfile(folder_path_MOD09CMG, '*.hdf'));
+% %         file_name_MOD09CMG = files_MOD09CMG.name;
+% %         file_path_MOD09CMG=fullfile(folder_path_MOD09CMG, file_name_MOD09CMG);
+% %     
+% %         folder_path_MOD11C1 = fullfile(modis_path, 'MOD11C1', string(datae_yy), string(datae_mm), string(datae_dd));
+% %         files_MOD11C1 = dir(fullfile(folder_path_MOD11C1, '*.hdf'));
+% %         file_name_MOD11C1 = files_MOD11C1.name;
+% %         file_path_MOD11C1=fullfile(folder_path_MOD11C1, file_name_MOD11C1);
+% %     
+% %         MODISproduct_atResolution=MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+% %         
+% %         MODISproduct_stacked.Modis_ndvi = [MODISproduct_stacked.Modis_ndvi; MODISproduct_atResolution.Modis_ndvi];
+% %         MODISproduct_stacked.Modis_ndwi = [MODISproduct_stacked.Modis_ndwi; MODISproduct_atResolution.Modis_ndwi];
+% %         MODISproduct_stacked.Modis_LST_ave = [MODISproduct_stacked.Modis_LST_ave; MODISproduct_atResolution.Modis_LST_ave];
+% %         MODISproduct_stacked.Modis_LST_dif = [MODISproduct_stacked.Modis_LST_dif; MODISproduct_atResolution.Modis_LST_dif];
+        
+        %%%%% smap process
         folder_path = fullfile(smap_path, string(datae_yy), '\', string(datae_mm), '\', string(datae_dd));
 
         files = dir(fullfile(folder_path, '*.h5'));
@@ -224,11 +247,37 @@ if processMode==1
             end
         end
         %%%%%%
-    
-        if CyGNSS_processing == "yes" % pre-process CyGNSS data
-            CyGNSSproduct_atResolution = CyGNSS_process_mode1(Target_Resolution, cygnss_data, cygnss_vars, datae_dd, numcols, numrows);
         
-        %%%%%%populating the cygnss products
+        % ---- incidence angle: only mask incidence_angle itself ----
+        %%% filter incidence angle
+        idx = cygnss_data.incidenceAngleDeg > 50;
+        cygnss_data.incidenceAngleDeg(idx) = NaN;
+        
+        %%% filter SNR
+        idx = cygnss_data.SNR_L1_L < 0.5;
+        cygnss_data.SNR_L1_L(idx) = NaN;
+
+        %%% filter reflectivity
+        idx = false(size(cygnss_data.reflectivityLinear_L1_L));
+        valid_lin = cygnss_data.reflectivityLinear_L1_L > 0;
+        idx(valid_lin) = 10*log10(cygnss_data.reflectivityLinear_L1_L(valid_lin)) < -45 | 10*log10(cygnss_data.reflectivityLinear_L1_L(valid_lin)) > 0;
+        % also mask non-positive reflectivity
+        idx = idx | (cygnss_data.reflectivityLinear_L1_L <= 0);
+        cygnss_data.reflectivityLinear_L1_L(idx) = NaN;
+
+
+        %%% convert SNR to linear before gridding
+        cygnss_data.SNR_L1_L = 10.^(cygnss_data.SNR_L1_L/10);
+        %%%
+
+        if CyGNSS_processing == "yes" % pre-process CyGNSS data
+            CyGNSSproduct_atResolution = CyGNSS_process_mode1(Target_Resolution, cygnss_data, cygnss_vars, doy_s, numcols, numrows);
+        
+        %%% convert SNR to dB after gridding
+        CyGNSSproduct_atResolution.SNR_L1_L = 10*log10(CyGNSSproduct_atResolution.SNR_L1_L);
+        %%%
+        
+        %%%%%% populating the cygnss products
             for k=1:numel(cygnss_vars) % initialize the varibales in the structure
                 CyGNSS_stacked.(string(cygnss_vars(k))) = [CyGNSS_stacked.(string(cygnss_vars(k))); CyGNSSproduct_atResolution.(string(cygnss_vars(k)))];
             end
@@ -259,6 +308,7 @@ if processMode==1
             else
                 temp(idNaN) = NaN;
                 CyGNSS_stacked.(string(cygnss_vars(k))) = temp;
+            end
         end
     end
 
@@ -519,7 +569,7 @@ end
 
 %%%%%% saving the products %%%%%%%
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-name=(product_path + '\collocateddata_SS_check' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
+name=(product_path + '\collocateddata_CYGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
 save(name,'Target_Resolution', 'SMAPproduct_stacked', 'CyGNSS_stacked', '-v7.3');
 
 end

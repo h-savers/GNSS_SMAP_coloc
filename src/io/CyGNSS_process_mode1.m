@@ -26,12 +26,16 @@ for i=1:numel(cygnss_vars) % initialize the varibales in the structure
         newvar2 = [var char('_atRes')]; %to save after matrix size correction
         correct_matrix = NaN(numrows, numcols);
         
-        if string(var)=="qualityFlags" || string(var)=="qualityFlags_2"%check for quality flag which needs "computeFlag_mode_bitWise" function
+        if string(var)=="qualityControlFlags_L1_L" || string(var)=="qualityControlFlags_2_L1_L"%check for quality flag which needs "computeFlag_mode_bitWise" function
             eval([newvar '=accumarray([cygnss_r cygnss_c],(cell2mat(read_vars(i))),[],@computeFlag_mode_bitWise,-9999);']);
 
         elseif string(var)=="notToBeUsed" || string(var)=="notRecommended"
             eval([newvar '=accumarray([cygnss_r cygnss_c], cell2mat(read_vars(i)), [], @computeLogical_mode, -9999);']);
 
+        elseif string(var)=="timeUTC"
+            t = posixtime(read_vars{i});
+            eval([newvar '=accumarray([cygnss_r cygnss_c], t, [], @mean, -9999);']);
+    
         else
             eval([newvar ' = accumarray([cygnss_r cygnss_c],(double(cell2mat(read_vars(i)))),[],@computemean, -9999);']);
         end

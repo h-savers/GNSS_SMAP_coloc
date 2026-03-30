@@ -80,11 +80,11 @@ if HydroGNSS_processing=="yes"
         HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(i)))=[];
         
         if HydroGNSS_vars(i)=="timeUTC"
-            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaT;
-            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaT;
+            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaT;
+            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaT;
         else
-            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaN;
-            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaN;
+            HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaN;
+            HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaN;
         end
     end
 end
