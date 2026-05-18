@@ -11,6 +11,7 @@ SMAPQualityFlagFilter = config.SMAPQualityFlagFilter;
 Target_Resolution = config.Target_Resolution;
 smap_path = config.smap_path;
 modis_path = config.modis_path;
+smos_path = config.smos_path;
 HydroGNSS_processing = config.hydro_processing; % if yes the HydroGNSS data is also processed
 product_path = config.product_path;
 SMAP_resolution = config.SMAP_resolution;
@@ -59,6 +60,8 @@ MODISproduct_stacked.Modis_ndvi = [];
 MODISproduct_stacked.Modis_ndwi = [];
 MODISproduct_stacked.Modis_LST_ave = [];
 MODISproduct_stacked.Modis_LST_dif = [];
+
+SMOSproduct_stacked.soil_mositure = [];
 
 if HydroGNSS_processing=="yes" 
     HydroGNSS_data = load(config.hydro_file); %load data
@@ -129,18 +132,34 @@ for i=1:nDays
     datae_mm = detail_date(:,2);
     datae_dd = detail_date(:,3);
 
+    %%%%% smos process
+    folder_path_smos = fullfile(smos_path, string(datae_yy), string(datae_mm), string(datae_dd));
+    files = dir(fullfile(folder_path_smos, '*.nc'));
+    for k = 1:numel(files)
+        name = files(k).name;
+        if contains(name, 'CLF31A')
+            file_name_smos_a = name;
+        elseif contains(name, 'CLF31D')
+            file_name_smos_d = name;
+        end
+    end
+    file_path_smos_a = fullfile(folder_path_smos, file_name_smos_a);
+    file_path_smos_d = fullfile(folder_path_smos, file_name_smos_d);
+
+    SMOSproduct_atResolution = SMOS_process(file_path_smos_a, file_path_smos_d);
+
     %%%%% modis process
     folder_path_MOD09CMG = fullfile(modis_path, 'MOD09CMG', string(datae_yy), string(datae_mm), string(datae_dd));
     files_MOD09CMG = dir(fullfile(folder_path_MOD09CMG, '*.hdf'));
     file_name_MOD09CMG = files_MOD09CMG.name;
-    file_path_MOD09CMG=fullfile(folder_path_MOD09CMG, file_name_MOD09CMG);
+    file_path_MOD09CMG = fullfile(folder_path_MOD09CMG, file_name_MOD09CMG);
 
     folder_path_MOD11C1 = fullfile(modis_path, 'MOD11C1', string(datae_yy), string(datae_mm), string(datae_dd));
     files_MOD11C1 = dir(fullfile(folder_path_MOD11C1, '*.hdf'));
     file_name_MOD11C1 = files_MOD11C1.name;
-    file_path_MOD11C1=fullfile(folder_path_MOD11C1, file_name_MOD11C1);
+    file_path_MOD11C1 = fullfile(folder_path_MOD11C1, file_name_MOD11C1);
 
-    MODISproduct_atResolution=MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+    MODISproduct_atResolution = MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
     
     MODISproduct_stacked.Modis_ndvi = [MODISproduct_stacked.Modis_ndvi; MODISproduct_atResolution.Modis_ndvi];
     MODISproduct_stacked.Modis_ndwi = [MODISproduct_stacked.Modis_ndwi; MODISproduct_atResolution.Modis_ndwi];
@@ -151,7 +170,7 @@ for i=1:nDays
     folder_path = fullfile(smap_path, string(datae_yy), string(datae_mm), string(datae_dd));
     files = dir(fullfile(folder_path, '*.h5'));
     file_name = files.name;
-    file_path=fullfile(folder_path, file_name);
+    file_path = fullfile(folder_path, file_name);
 
     SMAPproduct = SMAP_read(file_path, qfs, SMAP_resolution, SMAPQualityFlagFilter);% read SMAP data
     SMAPproduct_atResolution = SMAP_process(SMAPproduct, Target_Resolution, numcols, numrows, SMAP_resolution, sm_c, sm_r, SMAPQualityFlagFilter);
