@@ -69,7 +69,7 @@ if HydroGNSS_processing=="yes"
     id_Galileo=find(constellation=="Galileo");
 
     HydroGNSS_data = rmfield(HydroGNSS_data, 'constellation');
-% %     HydroGNSS_data = rmfield(HydroGNSS_data, 'SixHourDir');
+    HydroGNSS_data = rmfield(HydroGNSS_data, 'SixHourDir');
     HydroGNSS_vars = fieldnames(HydroGNSS_data);
     HydroGNSS_GPS_data = HydroGNSS_data;
     HydroGNSS_Galileo_data = HydroGNSS_data;
@@ -97,10 +97,8 @@ if HydroGNSS_processing=="yes"
     seaMask=load('D:\Hamed\SML2OP\Auxiliary_Data\SEA_MASK_20240212.mat', 'SEA_MASK_25km');
     seaMask=seaMask.SEA_MASK_25km;
 
-    HydroGNSS_data = apply_sml2op_filter(HydroGNSS_data, suffixes, seaMask);
-
-    HydroGNSS_GPS_data     = apply_sml2op_filter(HydroGNSS_GPS_data, suffixes, seaMask);
-    HydroGNSS_Galileo_data = apply_sml2op_filter(HydroGNSS_Galileo_data, suffixes, seaMask);
+    HydroGNSS_GPS_data     = apply_general_filter(HydroGNSS_GPS_data, suffixes, seaMask);
+    HydroGNSS_Galileo_data = apply_general_filter(HydroGNSS_Galileo_data, suffixes, seaMask);
     
     %%% convert SNR to linear before gridding
     HydroGNSS_GPS_data.SNR_1_L = 10.^(HydroGNSS_GPS_data.SNR_1_L/10);
@@ -238,115 +236,59 @@ for i=1:nDays
 
     if HydroGNSS_processing == "yes" % pre-process HydroGNSS data
 
-
-% %         % ---- incidence angle: only mask incidence_angle itself ----
-% %         if isfield(HydroGNSS_GPS_data, 'incidenceAngleDeg')
-% %             idx = HydroGNSS_GPS_data.incidenceAngleDeg > 45;
-% %             HydroGNSS_GPS_data.incidenceAngleDeg(idx) = NaN;
-% %         end
-% %         
-% %         if isfield(HydroGNSS_Galileo_data, 'incidenceAngleDeg')
-% %             idx = HydroGNSS_Galileo_data.incidenceAngleDeg > 45;
-% %             HydroGNSS_Galileo_data.incidenceAngleDeg(idx) = NaN;
-% %         end
-% %         
-% %         % ---- SNR and Reflectivity: only mask the related variable ----
-% %         for s = 1:numel(suffixes)
-% %             suf = suffixes(s);
-% %         
-% %             snrField  = "SNR" + suf;
-% %             reflField = "reflectivityLinear" + suf;
-% %         
-% %             % ===== GPS =====
-% %             if isfield(HydroGNSS_GPS_data, snrField)
-% %                 idx = HydroGNSS_GPS_data.(snrField) < 0.5;
-% %                 HydroGNSS_GPS_data.(snrField)(idx) = NaN;
-% %             end
-% %         
-% %             if isfield(HydroGNSS_GPS_data, reflField)
-% %                 refl_lin = HydroGNSS_GPS_data.(reflField);
-% %         
-% %                 idx = false(size(refl_lin));
-% %                 valid_lin = refl_lin > 0;
-% %                 idx(valid_lin) = 10*log10(refl_lin(valid_lin)) < -45 | 10*log10(refl_lin(valid_lin)) > 0;
-% %         
-% %                 % also mask non-positive reflectivity
-% %                 idx = idx | (refl_lin <= 0);
-% %         
-% %                 HydroGNSS_GPS_data.(reflField)(idx) = NaN;
-% %             end
-% %         
-% %             % ===== Galileo =====
-% %             if isfield(HydroGNSS_Galileo_data, snrField)
-% %                 idx = HydroGNSS_Galileo_data.(snrField) < 0.5;
-% %                 HydroGNSS_Galileo_data.(snrField)(idx) = NaN;
-% %             end
-% %         
-% %             if isfield(HydroGNSS_Galileo_data, reflField)
-% %                 refl_lin = HydroGNSS_Galileo_data.(reflField);
-% %         
-% %                 idx = false(size(refl_lin));
-% %                 valid_lin = refl_lin > 0;
-% %                 idx(valid_lin) = 10*log10(refl_lin(valid_lin)) < -45 | 10*log10(refl_lin(valid_lin)) > 0;
-% %         
-% %                 % also mask non-positive reflectivity
-% %                 idx = idx | (refl_lin <= 0);
-% %         
-% %                 HydroGNSS_Galileo_data.(reflField)(idx) = NaN;
-% %             end
-% %         end
-    
-        
-
-        %%% collocate to the target resolution
-
-% %         HydroGNSSproduct_GPS_atResolution = HydroGNSS_process( ...
-% %         Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, doy, numcols, numrows);
-% % 
-% %         HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
-% %         Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, doy, numcols, numrows);
-
         datePattern = string(valid_dates(i), "yyyy-MM") + "\" + string(valid_dates(i), "dd");
+
+        %%% Each HydroGNSS variable is built as a num_cells x 4 matrix for the
+        %%% day, one column per 6-hour block (col 1 = H00 ... col 4 = H18).
+        %%% Empty blocks contribute a NaN column, so the column layout is fixed.
+        HydroGNSS_GPS_day     = struct;
+        HydroGNSS_Galileo_day = struct;
+        for k = 1:numel(HydroGNSS_vars)
+            varName = string(HydroGNSS_vars(k));
+            HydroGNSS_GPS_day.(varName)     = NaN(numcols*numrows, numel(hours));
+            HydroGNSS_Galileo_day.(varName) = NaN(numcols*numrows, numel(hours));
+        end
 
         for h = 1:numel(hours) %%% loop over 6 hour blocks
 
             targetPattern = datePattern + "\" + hours(h);
             idx_6hour = find(SixHourDir == targetPattern);
 
-% %             if ~isempty(idx_6hour)
-            if hours(h)=="H06"
-                HydroGNSSproduct_GPS_atResolution = HydroGNSS_process( ...
-                Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
-    
-                HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
-                Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
+            % Grid this 6-hour block. Empty blocks return a full NaN grid,
+            % so every block contributes exactly one column to the day's
+            % matrix and the downstream land mask stays aligned.
+            HydroGNSSproduct_GPS_atResolution = HydroGNSS_process( ...
+            Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
+
+            HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
+            Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
+
+            %%% convert SNR to dB after gridding
+            HydroGNSSproduct_GPS_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_L);
+            HydroGNSSproduct_GPS_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_R);
+            HydroGNSSproduct_GPS_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_L);
+            HydroGNSSproduct_GPS_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_R);
+
+            HydroGNSSproduct_Galileo_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_L);
+            HydroGNSSproduct_Galileo_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_R);
+            HydroGNSSproduct_Galileo_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_L);
+            HydroGNSSproduct_Galileo_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_R);
+
+            %%% store this 6-hour block as column h of the day's matrix
+            for k = 1:numel(HydroGNSS_vars)
+                varName = string(HydroGNSS_vars(k));
+                HydroGNSS_GPS_day.(varName)(:, h)     = HydroGNSSproduct_GPS_atResolution.(varName);
+                HydroGNSS_Galileo_day.(varName)(:, h) = HydroGNSSproduct_Galileo_atResolution.(varName);
             end
         end
-        %%%
-        
-        %%% convert SNR to dB after gridding
-        HydroGNSSproduct_GPS_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_L);
-        HydroGNSSproduct_GPS_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_R);
-        HydroGNSSproduct_GPS_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_L);
-        HydroGNSSproduct_GPS_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_R);
 
-        HydroGNSSproduct_Galileo_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_L);
-        HydroGNSSproduct_Galileo_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_R);
-        HydroGNSSproduct_Galileo_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_L);
-        HydroGNSSproduct_Galileo_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_R);
-        %%%
-
-        %%% stacking collocated data
+        %%% stacking collocated data (append the day's num_cells x 4 block)
         for k = 1:numel(HydroGNSS_vars)
             varName = string(HydroGNSS_vars(k));
             HydroGNSS_GPS_stacked.(varName) = ...
-                [HydroGNSS_GPS_stacked.(varName); HydroGNSSproduct_GPS_atResolution.(varName)];
-        end
-
-        for k = 1:numel(HydroGNSS_vars)
-            varName = string(HydroGNSS_vars(k));
+                [HydroGNSS_GPS_stacked.(varName); HydroGNSS_GPS_day.(varName)];
             HydroGNSS_Galileo_stacked.(varName) = ...
-                [HydroGNSS_Galileo_stacked.(varName); HydroGNSSproduct_Galileo_atResolution.(varName)];
+                [HydroGNSS_Galileo_stacked.(varName); HydroGNSS_Galileo_day.(varName)];
         end
         %%%
     end
@@ -354,13 +296,11 @@ for i=1:nDays
 end % end of reading all days
 
 %%%%%%%%%%%%%% Masking to get all HydroGNSS data (at the moment only for 25km resolution) %%%%%%%%%%%%%%%
-nDays = datenum(endDay) - datenum(startDay) + 1;
-
 if HydroGNSS_processing=="yes"
 
     mask = load('LandMask_EASEgrid25km.mat');
     mask = mask.mask';
-    mask = repmat(mask(:),nDays,1);
+    mask = repmat(mask(:),nDays,1); % one num_cells block of rows per day
     idNaN = find(isnan(mask));
 
     for k=1:numel(HydroGNSS_vars) % masking the land based on land mask of EASE grid v2.0
@@ -368,7 +308,7 @@ if HydroGNSS_processing=="yes"
         if string(HydroGNSS_vars(k))=="year"
            HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = datae_yy;
         else
-            temp_GPS(idNaN) = NaN;
+            temp_GPS(idNaN, :) = NaN;
             HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = temp_GPS;
         end
     end
@@ -378,7 +318,7 @@ if HydroGNSS_processing=="yes"
         if string(HydroGNSS_vars(k))=="year"
            HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = datae_yy;
         else
-            temp_Galileo(idNaN) = NaN;
+            temp_Galileo(idNaN, :) = NaN;
             HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = temp_Galileo;
         end
     end
@@ -388,12 +328,12 @@ firstDay = day(startDay, 'dayofyear');
 lastDay = day(endDay, 'dayofyear');
 
 %%%%%% saving the products %%%%%%%
-% % days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-% % name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km_H06_newFiltering.mat');
-% % save(name,'Target_Resolution', 'SMAPproduct_stacked', 'MODISproduct_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
-
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
 name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km_H06_newFiltering.mat');
-save(name,'Target_Resolution', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
+save(name,'Target_Resolution', 'hours', 'SMAPproduct_stacked', 'MODISproduct_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
+
+% % days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
+% % name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
+% % save(name,'Target_Resolution', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
 
 end

@@ -1,4 +1,4 @@
-function data = apply_general_filter(data, suffixes, seaMask, opts)
+function data = apply_general_filter(data, suffixes, seaMask)
 % APPLY_GENERAL_FILTER  Pre-gridding filters on the flat HydroGNSS struct,
 % ported from SML2OP's L1B Filter / OceanFilter pipeline.
 %

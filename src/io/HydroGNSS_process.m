@@ -13,6 +13,19 @@ idx_6hour = idx_6hour(:);
 subset_lat = splat(idx_6hour);
 index = find(~isnan(subset_lat));
 abs_idx = idx_6hour(index);
+
+% An empty 6-hour block (no rows, or no rows with a valid specular point)
+% must still return a full NaN grid: Combining_Hydro stacks one grid per
+% block and the downstream land mask assumes every block contributes
+% numcols*numrows cells.
+if isempty(abs_idx)
+    HydroGNSSproduct_GPS_atResolution = struct;
+    for i = 1:numel(hydrognss_vars)
+        HydroGNSSproduct_GPS_atResolution.(string(hydrognss_vars(i))) = NaN(numcols*numrows, 1);
+    end
+    return
+end
+
 [hydrognss_c,hydrognss_r]=easeconv_grid3(splat(abs_idx),splon(abs_idx),Resolution);
 
 % % doy_all=hydrognss_product.dayOfYear;
