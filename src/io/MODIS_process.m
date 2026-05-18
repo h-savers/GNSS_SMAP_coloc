@@ -1,8 +1,5 @@
 function MODISproduct_atResolution=MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r)
 
-mask = load('maskLand_EASE25.mat'); 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%% ndvi & ndwi part
 
 cloudCover=hdfread(file_path_MOD09CMG,'Coarse Resolution Internal CM');
@@ -15,7 +12,6 @@ Band1=Band1*0.0001;
 Band1_c=NaN(size(Band1));ind=find(stBit==1);Band1_c(ind)=Band1(ind);
 Band1_n=accumarray([modis_c(:) modis_r(:)],Band1_c(:),[],@computemean,-9999);
 % % Band1_n=flipdim(Band1_n', 1);
-Band1_n=Band1_n';
 Band1_n(Band1_n==-9999)=NaN;
 
 Band2=hdfread(file_path_MOD09CMG,'Coarse Resolution Surface Reflectance Band 2');
@@ -24,7 +20,6 @@ Band2=Band2*0.0001;
 Band2_c=NaN(size(Band2));ind=find(stBit==1);Band2_c(ind)=Band2(ind);
 Band2_n=accumarray([modis_c(:) modis_r(:)],Band2_c(:),[],@computemean,-9999);
 % % Band2_n=flipdim(Band2_n', 1);
-Band2_n=Band2_n';
 Band2_n(Band2_n==-9999)=NaN;
 
 Band5=hdfread(file_path_MOD09CMG,'Coarse Resolution Surface Reflectance Band 5');
@@ -33,7 +28,6 @@ Band5=Band5*0.0001;
 Band5_c=NaN(size(Band5));ind=find(stBit==1);Band5_c(ind)=Band5(ind);
 Band5_n=accumarray([modis_c(:) modis_r(:)],Band5_c(:),[],@computemean,-9999);
 % % Band5_n=flipdim(Band5_n', 1);
-Band5_n=Band5_n';
 Band5_n(Band5_n==-9999)=NaN;  
 
 ndwi = (Band2_n-Band5_n)./(Band2_n+Band5_n); 
@@ -95,14 +89,14 @@ LST_daily_ave_n(isnan(lstC_nightMasked) | isnan(lstC_dayMasked)) = NaN;
 LST_daily_dif_n = lstC_dayMasked-lstC_nightMasked;
 
 LST_daily_ave=accumarray([modis_c(:) modis_r(:)],LST_daily_ave_n(:),[],@computemean,-9999);
-LST_daily_ave=LST_daily_ave';
 LST_daily_ave=LST_daily_ave(:);
 LST_daily_dif=accumarray([modis_c(:) modis_r(:)],LST_daily_dif_n(:),[],@computemean,-9999);
-LST_daily_dif=LST_daily_dif';
 LST_daily_dif=LST_daily_dif(:);
 
 %%%%%% masking for keeping just land
-mask=mask.maskLand(:);
+mask = load('maskLand_EASE25.mat');
+mask=mask.maskLand';
+mask=mask(:);
 for j=1:size(mask)
     if isnan(mask(j))
         ndwi(j)=NaN;

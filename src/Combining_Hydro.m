@@ -147,6 +147,7 @@ for i=1:nDays
     file_path_smos_d = fullfile(folder_path_smos, file_name_smos_d);
 
     SMOSproduct_atResolution = SMOS_process(file_path_smos_a, file_path_smos_d);
+    SMOSproduct_stacked.soil_mositure = [SMOSproduct_stacked.soil_mositure; SMOSproduct_atResolution.soil_moisture];
 
     %%%%% modis process
     folder_path_MOD09CMG = fullfile(modis_path, 'MOD09CMG', string(datae_yy), string(datae_mm), string(datae_dd));
@@ -348,8 +349,8 @@ lastDay = day(endDay, 'dayofyear');
 
 %%%%%% saving the products %%%%%%%
 days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km_H06_newFiltering.mat');
-save(name,'Target_Resolution', 'hours', 'SMAPproduct_stacked', 'MODISproduct_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
+name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km_withSMOS.mat');
+save(name,'Target_Resolution', 'hours', 'SMAPproduct_stacked', 'SMOSproduct_stacked', 'MODISproduct_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
 
 % % days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
 % % name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
