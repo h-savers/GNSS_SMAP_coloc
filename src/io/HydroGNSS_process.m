@@ -57,7 +57,7 @@ for i=1:numel(hydrognss_vars) % initialize the varibales in the structure
             eval([newvar '=accumarray([hydrognss_c hydrognss_r], cell2mat(read_vars(i)), [], @computeLogical_mode, -9999);']);
 
         elseif string(var)=="timeUTC"
-            t = posixtime(read_vars{i});
+            t = posixtime(datetime(read_vars{i}, 'InputFormat', 'yyyy-MM-dd HH:mm:ss'));
             eval([newvar '=accumarray([hydrognss_c hydrognss_r], t, [], @mean, -9999);']);
 
         elseif string(var)=="constellation"

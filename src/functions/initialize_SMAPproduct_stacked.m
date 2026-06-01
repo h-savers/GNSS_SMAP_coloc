@@ -13,6 +13,9 @@ if SMAP_resolution==9
         SMAPproduct_stacked.mean.soil_moisture_error=[];
         SMAPproduct_stacked.mean.albedo=[];
         SMAPproduct_stacked.mean.vegetation_water_content=[];
+        SMAPproduct_stacked.mean.soil_moisture_full_map=[];
+        SMAPproduct_stacked.mean.vegetation_opacity_full_map=[];
+        SMAPproduct_stacked.mean.vegetation_water_content_full_map=[];
 
     elseif SMAPQualityFlagFilter=="yes"
 
@@ -24,6 +27,9 @@ if SMAP_resolution==9
         SMAPproduct_stacked.Filtered_B0.mean.soil_moisture_error=[];
         SMAPproduct_stacked.Filtered_B0.mean.albedo=[];
         SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content=[];
+        SMAPproduct_stacked.Filtered_B0.mean.soil_moisture_full_map=[];
+        SMAPproduct_stacked.Filtered_B0.mean.vegetation_opacity_full_map=[];
+        SMAPproduct_stacked.Filtered_B0.mean.vegetation_water_content_full_map=[];
 
         SMAPproduct_stacked.Filtered_B2.mean.latitude=[];
         SMAPproduct_stacked.Filtered_B2.mean.longitude=[];
@@ -33,11 +39,14 @@ if SMAP_resolution==9
         SMAPproduct_stacked.Filtered_B2.mean.soil_moisture_error=[];
         SMAPproduct_stacked.Filtered_B2.mean.albedo=[];
         SMAPproduct_stacked.Filtered_B2.mean.vegetation_water_content=[];
+        SMAPproduct_stacked.Filtered_B2.mean.soil_moisture_full_map=[];
+        SMAPproduct_stacked.Filtered_B2.mean.vegetation_opacity_full_map=[];
+        SMAPproduct_stacked.Filtered_B2.mean.vegetation_water_content_full_map=[];
 
     end
 
 elseif SMAP_resolution==36
-    
+
     if SMAPQualityFlagFilter=="no"
 
         SMAPproduct_stacked.latitude=[];
@@ -48,6 +57,9 @@ elseif SMAP_resolution==36
         SMAPproduct_stacked.soil_moisture_error=[];
         SMAPproduct_stacked.albedo=[];
         SMAPproduct_stacked.vegetation_water_content=[];
+        SMAPproduct_stacked.soil_moisture_full_map=[];
+        SMAPproduct_stacked.vegetation_opacity_full_map=[];
+        SMAPproduct_stacked.vegetation_water_content_full_map=[];
 
     elseif SMAPQualityFlagFilter=="yes"
 
@@ -59,6 +71,9 @@ elseif SMAP_resolution==36
         SMAPproduct_stacked.Filtered_B0.soil_moisture_error=[];
         SMAPproduct_stacked.Filtered_B0.albedo=[];
         SMAPproduct_stacked.Filtered_B0.vegetation_water_content=[];
+        SMAPproduct_stacked.Filtered_B0.soil_moisture_full_map=[];
+        SMAPproduct_stacked.Filtered_B0.vegetation_opacity_full_map=[];
+        SMAPproduct_stacked.Filtered_B0.vegetation_water_content_full_map=[];
 
         SMAPproduct_stacked.Filtered_B2.latitude=[];
         SMAPproduct_stacked.Filtered_B2.longitude=[];
@@ -68,6 +83,9 @@ elseif SMAP_resolution==36
         SMAPproduct_stacked.Filtered_B2.soil_moisture_error=[];
         SMAPproduct_stacked.Filtered_B2.albedo=[];
         SMAPproduct_stacked.Filtered_B2.vegetation_water_content=[];
+        SMAPproduct_stacked.Filtered_B2.soil_moisture_full_map=[];
+        SMAPproduct_stacked.Filtered_B2.vegetation_opacity_full_map=[];
+        SMAPproduct_stacked.Filtered_B2.vegetation_water_content_full_map=[];
 
     end
 end
