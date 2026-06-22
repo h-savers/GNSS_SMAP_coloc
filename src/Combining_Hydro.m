@@ -68,27 +68,50 @@ function Combining_Hydro(configurationPath)
     SMOSproduct_stacked.soil_moisture = [];
     SMOSproduct_stacked.soil_moisture_full_map = [];
     
-    if HydroGNSS_processing=="yes" 
+    if HydroGNSS_processing=="yes"
         HydroGNSS_data = load(config.hydro_file); %load data
-    
+
         SixHourDir = HydroGNSS_data.SixHourDir;
         constellation = HydroGNSS_data.constellation;
         id_GPS=find(constellation=="GPS");
         id_Galileo=find(constellation=="Galileo");
-    
+
         HydroGNSS_data = rmfield(HydroGNSS_data, 'constellation');
         HydroGNSS_data = rmfield(HydroGNSS_data, 'SixHourDir');
         HydroGNSS_vars = fieldnames(HydroGNSS_data);
-        HydroGNSS_GPS_data = HydroGNSS_data;
+
+        %%% GPS-only and Galileo-only views: same data with the other
+        %%% constellation's rows blanked out (NaN/NaT). The merged
+        %%% HydroGNSS_data keeps every row.
+        HydroGNSS_GPS_data     = HydroGNSS_data;
         HydroGNSS_Galileo_data = HydroGNSS_data;
-    
-        HydroGNSS_GPS_stacked=struct;
-        HydroGNSS_Galileo_stacked=struct;
-    
-        for i=1:numel(HydroGNSS_vars) % initialize the varibales in the structure
-            HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(i)))=[];
-            HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(i)))=[];
-            
+
+        %%% Sparse in-loop storage: only non-NaN values are kept.
+        %%% flat_index = linear cell index into the numcols-by-numrows EASE map.
+        %%% day_id     = 1..nDays of the source day for the record.
+        %%% block_id   = 1..4 of the 6-hour block (1=H00, 2=H06, 3=H12, 4=H18).
+        %%% These three bookkeeping vectors are shared across all variables of
+        %%% a given product (combined / GPS-only / Galileo-only) because every
+        %%% variable in a 6-hour block shares the same valid-cell set
+        %%% (defined by ~isnan(specularPointLat) after gridding).
+        %%% They are discarded before saving; the .mat output format is unchanged.
+        HydroGNSS_stacked         = struct;
+        HydroGNSS_GPS_stacked     = struct;
+        HydroGNSS_Galileo_stacked = struct;
+        HydroGNSS_stacked.flat_index         = uint32([]);
+        HydroGNSS_stacked.day_id             = uint16([]);
+        HydroGNSS_stacked.block_id           = uint8([]);
+        HydroGNSS_GPS_stacked.flat_index     = uint32([]);
+        HydroGNSS_GPS_stacked.day_id         = uint16([]);
+        HydroGNSS_GPS_stacked.block_id       = uint8([]);
+        HydroGNSS_Galileo_stacked.flat_index = uint32([]);
+        HydroGNSS_Galileo_stacked.day_id     = uint16([]);
+        HydroGNSS_Galileo_stacked.block_id   = uint8([]);
+        for i=1:numel(HydroGNSS_vars)
+            HydroGNSS_stacked.(string(HydroGNSS_vars(i)))         = [];
+            HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(i)))     = [];
+            HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(i))) = [];
+
             if HydroGNSS_vars(i)=="timeUTC"
                 HydroGNSS_GPS_data.(string(HydroGNSS_vars(i)))(id_Galileo)=NaT;
                 HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaT;
@@ -97,33 +120,37 @@ function Combining_Hydro(configurationPath)
                 HydroGNSS_Galileo_data.(string(HydroGNSS_vars(i)))(id_GPS)=NaN;
             end
         end
-    
+
         % ---------- masking ----------
         % % suffixes = ["_1_L","_5_L"];
         suffixes ="_1_L";
-        
+
         seaMask=load('D:\Hamed\SML2OP\Auxiliary_Data\SEA_MASK_20240212.mat', 'SEA_MASK_25km');
         seaMask=seaMask.SEA_MASK_25km;
-    
-        HydroGNSS_GPS_data     = apply_general_filter(HydroGNSS_GPS_data, suffixes, seaMask);
+
+        HydroGNSS_data         = apply_general_filter(HydroGNSS_data,         suffixes, seaMask);
+        HydroGNSS_GPS_data     = apply_general_filter(HydroGNSS_GPS_data,     suffixes, seaMask);
         HydroGNSS_Galileo_data = apply_general_filter(HydroGNSS_Galileo_data, suffixes, seaMask);
-        
+
         %%% convert SNR to linear before gridding
+        HydroGNSS_data.SNR_1_L = 10.^(HydroGNSS_data.SNR_1_L/10);
+        HydroGNSS_data.SNR_1_R = 10.^(HydroGNSS_data.SNR_1_R/10);
+        HydroGNSS_data.SNR_5_L = 10.^(HydroGNSS_data.SNR_5_L/10);
+        HydroGNSS_data.SNR_5_R = 10.^(HydroGNSS_data.SNR_5_R/10);
+
         HydroGNSS_GPS_data.SNR_1_L = 10.^(HydroGNSS_GPS_data.SNR_1_L/10);
         HydroGNSS_GPS_data.SNR_1_R = 10.^(HydroGNSS_GPS_data.SNR_1_R/10);
         HydroGNSS_GPS_data.SNR_5_L = 10.^(HydroGNSS_GPS_data.SNR_5_L/10);
         HydroGNSS_GPS_data.SNR_5_R = 10.^(HydroGNSS_GPS_data.SNR_5_R/10);
-        
+
         HydroGNSS_Galileo_data.SNR_1_L = 10.^(HydroGNSS_Galileo_data.SNR_1_L/10);
         HydroGNSS_Galileo_data.SNR_1_R = 10.^(HydroGNSS_Galileo_data.SNR_1_R/10);
         HydroGNSS_Galileo_data.SNR_5_L = 10.^(HydroGNSS_Galileo_data.SNR_5_L/10);
         HydroGNSS_Galileo_data.SNR_5_R = 10.^(HydroGNSS_Galileo_data.SNR_5_R/10);
         %%%
-    
+
     end
-    
-    clear HydroGNSS_data
-    
+
     hours = ["H00", "H06", "H12", "H18"];
     
     %%% Pre-load the two days before startDay so the first iteration can
@@ -280,59 +307,79 @@ function Combining_Hydro(configurationPath)
     
             datePattern = string(valid_dates(i), "yyyy-MM") + "\" + string(valid_dates(i), "dd");
     
-            %%% Each HydroGNSS variable is built as a num_cells x 4 matrix for the
-            %%% day, one column per 6-hour block (col 1 = H00 ... col 4 = H18).
-            %%% Empty blocks contribute a NaN column, so the column layout is fixed.
-            HydroGNSS_GPS_day     = struct;
-            HydroGNSS_Galileo_day = struct;
-            for k = 1:numel(HydroGNSS_vars)
-                varName = string(HydroGNSS_vars(k));
-                HydroGNSS_GPS_day.(varName)     = NaN(numcols*numrows, numel(hours));
-                HydroGNSS_Galileo_day.(varName) = NaN(numcols*numrows, numel(hours));
-            end
-    
+            %%% Sparse stacking: for each 6-hour block of each product, find
+            %%% the cells that received any observation (defined by
+            %%% ~isnan(specularPointLat) after gridding) and append only those
+            %%% values plus shared bookkeeping (flat_index, day_id, block_id).
+            %%% Three views are gridded in parallel: combined (GPS+Galileo),
+            %%% GPS-only, and Galileo-only. The dense (nDays*nCells)x4
+            %%% layout per variable is restored at save time.
             for h = 1:numel(hours) %%% loop over 6 hour blocks
-    
+
                 targetPattern = datePattern + "\" + hours(h);
                 idx_6hour = find(SixHourDir == targetPattern);
-    
-                % Grid this 6-hour block. Empty blocks return a full NaN grid,
-                % so every block contributes exactly one column to the day's
-                % matrix and the downstream land mask stays aligned.
+
+                % Grid this 6-hour block. Empty blocks return a full NaN grid
+                % from HydroGNSS_process; the valid-cell sets below will be
+                % empty and nothing gets appended for that block.
+                HydroGNSSproduct_atResolution = HydroGNSS_process( ...
+                Target_Resolution, HydroGNSS_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
+
                 HydroGNSSproduct_GPS_atResolution = HydroGNSS_process( ...
                 Target_Resolution, HydroGNSS_GPS_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
-    
+
                 HydroGNSSproduct_Galileo_atResolution = HydroGNSS_process( ...
                 Target_Resolution, HydroGNSS_Galileo_data, HydroGNSS_vars, idx_6hour, numcols, numrows);
-    
+
                 %%% convert SNR to dB after gridding
+                HydroGNSSproduct_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_atResolution.SNR_1_L);
+                HydroGNSSproduct_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_atResolution.SNR_1_R);
+                HydroGNSSproduct_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_atResolution.SNR_5_L);
+                HydroGNSSproduct_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_atResolution.SNR_5_R);
+
                 HydroGNSSproduct_GPS_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_L);
                 HydroGNSSproduct_GPS_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_1_R);
                 HydroGNSSproduct_GPS_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_L);
                 HydroGNSSproduct_GPS_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_GPS_atResolution.SNR_5_R);
-    
+
                 HydroGNSSproduct_Galileo_atResolution.SNR_1_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_L);
                 HydroGNSSproduct_Galileo_atResolution.SNR_1_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_1_R);
                 HydroGNSSproduct_Galileo_atResolution.SNR_5_L = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_L);
                 HydroGNSSproduct_Galileo_atResolution.SNR_5_R = 10*log10(HydroGNSSproduct_Galileo_atResolution.SNR_5_R);
-    
-                %%% store this 6-hour block as column h of the day's matrix
+
+                %%% find valid cells per product (shared across vars within a product)
+                valid_all = uint32(find(~isnan(HydroGNSSproduct_atResolution.specularPointLat)));
+                valid_GPS = uint32(find(~isnan(HydroGNSSproduct_GPS_atResolution.specularPointLat)));
+                valid_GAL = uint32(find(~isnan(HydroGNSSproduct_Galileo_atResolution.specularPointLat)));
+
+                n_all = numel(valid_all);
+                n_GPS = numel(valid_GPS);
+                n_GAL = numel(valid_GAL);
+
+                %%% append bookkeeping
+                HydroGNSS_stacked.flat_index = [HydroGNSS_stacked.flat_index; valid_all];
+                HydroGNSS_stacked.day_id     = [HydroGNSS_stacked.day_id;     repmat(uint16(i), n_all, 1)];
+                HydroGNSS_stacked.block_id   = [HydroGNSS_stacked.block_id;   repmat(uint8(h),  n_all, 1)];
+
+                HydroGNSS_GPS_stacked.flat_index = [HydroGNSS_GPS_stacked.flat_index; valid_GPS];
+                HydroGNSS_GPS_stacked.day_id     = [HydroGNSS_GPS_stacked.day_id;     repmat(uint16(i), n_GPS, 1)];
+                HydroGNSS_GPS_stacked.block_id   = [HydroGNSS_GPS_stacked.block_id;   repmat(uint8(h),  n_GPS, 1)];
+
+                HydroGNSS_Galileo_stacked.flat_index = [HydroGNSS_Galileo_stacked.flat_index; valid_GAL];
+                HydroGNSS_Galileo_stacked.day_id     = [HydroGNSS_Galileo_stacked.day_id;     repmat(uint16(i), n_GAL, 1)];
+                HydroGNSS_Galileo_stacked.block_id   = [HydroGNSS_Galileo_stacked.block_id;   repmat(uint8(h),  n_GAL, 1)];
+
+                %%% append only valid values per variable (shared index per product)
                 for k = 1:numel(HydroGNSS_vars)
                     varName = string(HydroGNSS_vars(k));
-                    HydroGNSS_GPS_day.(varName)(:, h)     = HydroGNSSproduct_GPS_atResolution.(varName);
-                    HydroGNSS_Galileo_day.(varName)(:, h) = HydroGNSSproduct_Galileo_atResolution.(varName);
+                    v_all = HydroGNSSproduct_atResolution.(varName);
+                    v_GPS = HydroGNSSproduct_GPS_atResolution.(varName);
+                    v_GAL = HydroGNSSproduct_Galileo_atResolution.(varName);
+                    HydroGNSS_stacked.(varName)         = [HydroGNSS_stacked.(varName);         v_all(valid_all)];
+                    HydroGNSS_GPS_stacked.(varName)     = [HydroGNSS_GPS_stacked.(varName);     v_GPS(valid_GPS)];
+                    HydroGNSS_Galileo_stacked.(varName) = [HydroGNSS_Galileo_stacked.(varName); v_GAL(valid_GAL)];
                 end
             end
-    
-            %%% stacking collocated data (append the day's num_cells x 4 block)
-            for k = 1:numel(HydroGNSS_vars)
-                varName = string(HydroGNSS_vars(k));
-                HydroGNSS_GPS_stacked.(varName) = ...
-                    [HydroGNSS_GPS_stacked.(varName); HydroGNSS_GPS_day.(varName)];
-                HydroGNSS_Galileo_stacked.(varName) = ...
-                    [HydroGNSS_Galileo_stacked.(varName); HydroGNSS_Galileo_day.(varName)];
-            end
-            %%%
         end
     
         %%% rotate the gap-fill buffer: today becomes yesterday, yesterday becomes day-before
@@ -343,30 +390,40 @@ function Combining_Hydro(configurationPath)
     
     %%%%%%%%%%%%%% Masking to get all HydroGNSS data (at the moment only for 25km resolution) %%%%%%%%%%%%%%%
     if HydroGNSS_processing=="yes"
-    
+
         mask = load('LandMask_EASEgrid25km.mat');
         mask = mask.mask';
-        mask = repmat(mask(:),nDays,1); % one num_cells block of rows per day
-        idNaN = find(isnan(mask));
-    
-        for k=1:numel(HydroGNSS_vars) % masking the land based on land mask of EASE grid v2.0
-            temp_GPS = HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k)));
-            if string(HydroGNSS_vars(k))=="year"
-               HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = datae_yy;
-            else
-                temp_GPS(idNaN, :) = NaN;
-                HydroGNSS_GPS_stacked.(string(HydroGNSS_vars(k))) = temp_GPS;
+        ocean_lin = uint32(find(isnan(mask(:))));   % linear cell indices that are ocean
+
+        %%% Drop sparse records whose flat_index falls on ocean cells.
+        %%% Filter once per product (combined / GPS / Galileo), then subset
+        %%% every per-variable value vector with the same logical mask.
+        product_names = {'HydroGNSS_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked'};
+        for p = 1:numel(product_names)
+            pn = product_names{p};
+            S  = eval(pn);
+            keep = ~ismember(S.flat_index, ocean_lin);
+
+            S.flat_index = S.flat_index(keep);
+            S.day_id     = S.day_id(keep);
+            S.block_id   = S.block_id(keep);
+            for k = 1:numel(HydroGNSS_vars)
+                vn = string(HydroGNSS_vars(k));
+                if vn == "year"
+                    S.(vn) = datae_yy;
+                else
+                    v = S.(vn);
+                    S.(vn) = v(keep);
+                end
             end
-        end
-    
-        for k=1:numel(HydroGNSS_vars) % masking the land based on land mask of EASE grid v2.0
-            temp_Galileo = HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k)));
-            if string(HydroGNSS_vars(k))=="year"
-               HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = datae_yy;
-            else
-                temp_Galileo(idNaN, :) = NaN;
-                HydroGNSS_Galileo_stacked.(string(HydroGNSS_vars(k))) = temp_Galileo;
+
+            % write back
+            switch pn
+                case 'HydroGNSS_stacked',         HydroGNSS_stacked         = S;
+                case 'HydroGNSS_GPS_stacked',     HydroGNSS_GPS_stacked     = S;
+                case 'HydroGNSS_Galileo_stacked', HydroGNSS_Galileo_stacked = S;
             end
+            clear S
         end
     end
     
@@ -375,12 +432,63 @@ function Combining_Hydro(configurationPath)
     
     %%%%%% saving the products %%%%%%%
     days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-    name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km_Hydro1&Hydro2.mat');
-    save(name,'Target_Resolution', 'hours', 'SMAPproduct_stacked', 'SMOSproduct_stacked', 'MODISproduct_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
-    
-    % % days = ['days' num2str(firstDay) 'to' num2str(lastDay)];
-    % % name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km.mat');
-    % % save(name,'Target_Resolution', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked', '-v7.3');
+    name=(product_path + '\collocated_data_HydroGNSS_' + num2str(datae_yy) + '_' + days + '_' + num2str(Target_Resolution) + 'km_GPS&Galileo.mat');
+
+    %%% Stream the output as a v7.3 matfile so we never need all three
+    %%% reconstructed dense products in RAM simultaneously. SMAP/SMOS/MODIS
+    %%% go in as-is; each HydroGNSS product is rebuilt one variable at a
+    %%% time and the sparse store for that product is cleared right after.
+    if exist(name, 'file'); delete(name); end
+    m = matfile(name, 'Writable', true);
+    m.Target_Resolution    = Target_Resolution;
+    m.hours                = hours;
+    m.SMAPproduct_stacked  = SMAPproduct_stacked;
+    m.SMOSproduct_stacked  = SMOSproduct_stacked;
+    m.MODISproduct_stacked = MODISproduct_stacked;
+
+    if HydroGNSS_processing=="yes"
+        nCells = numcols*numrows;
+        nRows  = nDays * nCells;
+
+        product_names = {'HydroGNSS_stacked', 'HydroGNSS_GPS_stacked', 'HydroGNSS_Galileo_stacked'};
+        for p = 1:numel(product_names)
+            pn = product_names{p};
+            switch pn
+                case 'HydroGNSS_stacked',         S = HydroGNSS_stacked;
+                case 'HydroGNSS_GPS_stacked',     S = HydroGNSS_GPS_stacked;
+                case 'HydroGNSS_Galileo_stacked', S = HydroGNSS_Galileo_stacked;
+            end
+
+            % precompute the global (row, col) of every sparse record
+            global_row = (double(S.day_id) - 1) * nCells + double(S.flat_index);
+            col_ix     = double(S.block_id);
+            lin        = sub2ind([nRows, 4], global_row, col_ix);
+
+            % build the dense struct one variable at a time
+            out = struct;
+            for k = 1:numel(HydroGNSS_vars)
+                vn = string(HydroGNSS_vars(k));
+                if vn == "year"
+                    out.(vn) = datae_yy;
+                else
+                    dense = NaN(nRows, 4);
+                    dense(lin) = S.(vn);
+                    out.(vn) = dense;
+                    clear dense
+                end
+            end
+
+            m.(pn) = out;
+            clear out S
+
+            % free the sparse store for this product immediately
+            switch pn
+                case 'HydroGNSS_stacked',         HydroGNSS_stacked         = [];
+                case 'HydroGNSS_GPS_stacked',     HydroGNSS_GPS_stacked     = [];
+                case 'HydroGNSS_Galileo_stacked', HydroGNSS_Galileo_stacked = [];
+            end
+        end
+    end
 
 end
 
