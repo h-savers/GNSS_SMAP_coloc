@@ -65,8 +65,8 @@ lst_night(lst_night==0) = NaN;
 
 lst_day = 0.02*lst_day;
 lst_night = 0.02*lst_night;
-lstC_day = convtemp(lst_day,'K','C');
-lstC_night = convtemp(lst_night,'K','C');
+lstC_day = lst_day - 273.15;     % K -> C (avoids Aerospace Toolbox convtemp)
+lstC_night = lst_night - 273.15; % K -> C
 
 %%%%% QC for LST
 firstBitd = bitget(QC_day, 1);
