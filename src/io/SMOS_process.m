@@ -18,18 +18,27 @@ function SMOSproduct_atResolution = SMOS_process(file_path_smos_a, file_path_smo
 %   * physical SM range  [SM_MIN, SM_MAX]
 %   * retrieval DQX      Soil_Moisture_Dqx <= DQX_MAX
 %   * RFI probability    Rfi_Prob          <= RFI_MAX
+%   * non-nominal flag   Science_Flags bit 0 (FL_NON_NOM) must be clear
 % Combination:
 %   per-cell mean of valid A and D (NaN if both invalid).
+%
+% Science_Flags is a 32-bit table (CATDS/SMOS L2-L3 SM product). Bit 0
+% (mask 1, FL_NON_NOM) marks a non-nominal soil-moisture retrieval, i.e.
+% one obtained outside the nominal retrieval configuration. Cells with
+% this bit set are rejected. The bit meanings are defined in the SMOS L2
+% SM product spec, not in the file itself (the file only carries
+% _FillValue/long_name/units for Science_Flags).
 
 % --- QC thresholds (CATDS / SMOS L3 user guide defaults) ---
 SM_MIN  = 0.0;     % m^3/m^3, physical lower bound
 SM_MAX  = 1.0;     % m^3/m^3, physical upper bound
 DQX_MAX = 0.1;    % m^3/m^3, recommended uncertainty cutoff
 RFI_MAX = 0.5;    % 0-1, recommended RFI-probability cutoff
+SF_NONNOM_BIT = 1; % Science_Flags mask for bit 0 (FL_NON_NOM), reject if set
 
 % --- read + QC each pass ---
-sm_a = read_and_qc_SMOS(file_path_smos_a, SM_MIN, SM_MAX, DQX_MAX, RFI_MAX);
-sm_d = read_and_qc_SMOS(file_path_smos_d, SM_MIN, SM_MAX, DQX_MAX, RFI_MAX);
+sm_a = read_and_qc_SMOS(file_path_smos_a, SM_MIN, SM_MAX, DQX_MAX, RFI_MAX, SF_NONNOM_BIT);
+sm_d = read_and_qc_SMOS(file_path_smos_d, SM_MIN, SM_MAX, DQX_MAX, RFI_MAX, SF_NONNOM_BIT);
 
 sm_a=flip(sm_a');
 sm_d=flip(sm_d');
@@ -47,7 +56,7 @@ SMOSproduct_atResolution.soil_moisture = sm_daily(:);
 end
 
 
-function sm = read_and_qc_SMOS(ncfile, smMin, smMax, dqxMax, rfiMax)
+function sm = read_and_qc_SMOS(ncfile, smMin, smMax, dqxMax, rfiMax, nonNomBit)
 % Read one SMOS L3 daily file and return QC-filtered SM as a (lon x lat)
 % double matrix. ncread auto-applies scale_factor, add_offset, and
 % replaces _FillValue with NaN for floating-point output.
@@ -55,8 +64,10 @@ function sm = read_and_qc_SMOS(ncfile, smMin, smMax, dqxMax, rfiMax)
 sm  = double(ncread(ncfile, 'Soil_Moisture'));
 dqx = double(ncread(ncfile, 'Soil_Moisture_Dqx'));
 rfi = double(ncread(ncfile, 'Rfi_Prob'));
+sf  = int32(ncread(ncfile, 'Science_Flags'));   % 32-bit flag table, _FillValue=0
 
 sm(sm  < smMin | sm  > smMax)     = NaN;
 sm(dqx > dqxMax) = NaN;
 sm(rfi > rfiMax) = NaN;
+sm(bitand(sf, int32(nonNomBit)) > 0) = NaN;   % reject FL_NON_NOM (bit 0)
 end
