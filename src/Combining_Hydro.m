@@ -1,5 +1,6 @@
 function Combining_Hydro(configurationPath)
     
+    
     %%%%%%%%%%%%%%%%%% reading configuration file %%%%%%%%%%%%%%%%%%
     config = configFile_Hydro.instance(configurationPath);
     
@@ -78,6 +79,12 @@ function Combining_Hydro(configurationPath)
 
         HydroGNSS_data = rmfield(HydroGNSS_data, 'constellation');
         HydroGNSS_data = rmfield(HydroGNSS_data, 'SixHourDir');
+        % Merged extracts (e.g. NewCollection3) carry a 'MergedFiles' provenance
+        % string that is not a per-observation array; drop it so it is never
+        % treated as a griddable variable. Harmless when the field is absent.
+        if isfield(HydroGNSS_data, 'MergedFiles')
+            HydroGNSS_data = rmfield(HydroGNSS_data, 'MergedFiles');
+        end
         HydroGNSS_vars = fieldnames(HydroGNSS_data);
 
         %%% GPS-only and Galileo-only views: same data with the other
@@ -504,38 +511,65 @@ function out = process_one_day(d, smos_path, modis_path, smap_path, ...
     
     dv = datevec(d);
     yy = dv(1); mm = dv(2); dd = dv(3);
-    
+    nCells = numcols * numrows;
+
     % --- SMOS ---
     folder_path_smos = fullfile(smos_path, string(yy), string(mm), string(dd));
     files = dir(fullfile(folder_path_smos, '*.nc'));
     file_name_smos_a = '';
     file_name_smos_d = '';
+    % The CATDS SMOS product code changed from CLF31 to CLF3S on 2026-05-20.
+    % Both carry Soil_Moisture / _Dqx / Rfi_Prob / Science_Flags on the same
+    % 1388x584 grid and agree to ~0.002 m^3/m^3, so CLF3S is a drop-in.
+    % Prefer CLF31 when present (keeps pre-2026-05-20 runs identical), else CLF3S.
     for k = 1:numel(files)
         name = files(k).name;
         if contains(name, 'CLF31A')
             file_name_smos_a = name;
-        elseif contains(name, 'CLF31D')
+        elseif contains(name, 'CLF3SA') && isempty(file_name_smos_a)
+            file_name_smos_a = name;
+        end
+        if contains(name, 'CLF31D')
+            file_name_smos_d = name;
+        elseif contains(name, 'CLF3SD') && isempty(file_name_smos_d)
             file_name_smos_d = name;
         end
     end
-    file_path_smos_a = fullfile(folder_path_smos, file_name_smos_a);
-    file_path_smos_d = fullfile(folder_path_smos, file_name_smos_d);
-    out.SMOS = SMOS_process(file_path_smos_a, file_path_smos_d);
+    if isempty(file_name_smos_a) || isempty(file_name_smos_d)
+        warning('SMOS:missingDay', ...
+            'No SMOS CLF31/CLF3S A+D pair in %s; filling that day with NaN.', folder_path_smos);
+        out.SMOS.soil_moisture = NaN(nCells, 1);
+    else
+        file_path_smos_a = fullfile(folder_path_smos, file_name_smos_a);
+        file_path_smos_d = fullfile(folder_path_smos, file_name_smos_d);
+        out.SMOS = SMOS_process(file_path_smos_a, file_path_smos_d);
+    end
     
     % --- MODIS ---
     folder_path_MOD09CMG = fullfile(modis_path, 'MOD09CMG', string(yy), string(mm), string(dd));
     files_MOD09CMG = dir(fullfile(folder_path_MOD09CMG, '*.hdf'));
-    file_path_MOD09CMG = fullfile(folder_path_MOD09CMG, files_MOD09CMG.name);
-    
     folder_path_MOD11C1 = fullfile(modis_path, 'MOD11C1', string(yy), string(mm), string(dd));
     files_MOD11C1 = dir(fullfile(folder_path_MOD11C1, '*.hdf'));
-    file_path_MOD11C1 = fullfile(folder_path_MOD11C1, files_MOD11C1.name);
-    
-    out.MODIS = MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+    if isempty(files_MOD09CMG) || isempty(files_MOD11C1)
+        warning('MODIS:missingDay', ...
+            'Missing MOD09CMG/MOD11C1 hdf for %04d-%02d-%02d; filling MODIS with NaN.', yy, mm, dd);
+        out.MODIS.Modis_ndvi    = NaN(nCells, 1);
+        out.MODIS.Modis_ndwi    = NaN(nCells, 1);
+        out.MODIS.Modis_LST_ave = NaN(nCells, 1);
+        out.MODIS.Modis_LST_dif = NaN(nCells, 1);
+    else
+        file_path_MOD09CMG = fullfile(folder_path_MOD09CMG, files_MOD09CMG.name);
+        file_path_MOD11C1  = fullfile(folder_path_MOD11C1, files_MOD11C1.name);
+        out.MODIS = MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+    end
     
     % --- SMAP ---
     folder_path_smap = fullfile(smap_path, string(yy), string(mm), string(dd));
     files_smap = dir(fullfile(folder_path_smap, '*.h5'));
+    if isempty(files_smap)
+        error('SMAP:missingDay', ...
+            'No SMAP .h5 granule for %04d-%02d-%02d in %s', yy, mm, dd, folder_path_smap);
+    end
     if numel(files_smap) > 1
         % Multiple SMAP granules for the same day (e.g. *_001.h5 and *_002.h5).
         % Pick the one with the highest trailing _NNN suffix before .h5.
