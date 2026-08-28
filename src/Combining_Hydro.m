@@ -542,7 +542,13 @@ function out = process_one_day(d, smos_path, modis_path, smap_path, ...
     else
         file_path_smos_a = fullfile(folder_path_smos, file_name_smos_a);
         file_path_smos_d = fullfile(folder_path_smos, file_name_smos_d);
-        out.SMOS = SMOS_process(file_path_smos_a, file_path_smos_d);
+        try
+            out.SMOS = SMOS_process(file_path_smos_a, file_path_smos_d);
+        catch ME
+            warning('SMOS:readError', ...
+                'SMOS read failed for %s (%s); filling that day with NaN.', folder_path_smos, ME.message);
+            out.SMOS.soil_moisture = NaN(nCells, 1);
+        end
     end
     
     % --- MODIS ---
@@ -553,14 +559,19 @@ function out = process_one_day(d, smos_path, modis_path, smap_path, ...
     if isempty(files_MOD09CMG) || isempty(files_MOD11C1)
         warning('MODIS:missingDay', ...
             'Missing MOD09CMG/MOD11C1 hdf for %04d-%02d-%02d; filling MODIS with NaN.', yy, mm, dd);
-        out.MODIS.Modis_ndvi    = NaN(nCells, 1);
-        out.MODIS.Modis_ndwi    = NaN(nCells, 1);
-        out.MODIS.Modis_LST_ave = NaN(nCells, 1);
-        out.MODIS.Modis_LST_dif = NaN(nCells, 1);
+        out.MODIS = nan_modis(nCells);
     else
         file_path_MOD09CMG = fullfile(folder_path_MOD09CMG, files_MOD09CMG.name);
         file_path_MOD11C1  = fullfile(folder_path_MOD11C1, files_MOD11C1.name);
-        out.MODIS = MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+        try
+            out.MODIS = MODIS_process(file_path_MOD09CMG, file_path_MOD11C1, Target_Resolution, modis_c, modis_r);
+        catch ME
+            % A present-but-corrupt hdf (e.g. 2026-06-24 MOD11C1) throws in
+            % hdfread; treat it like a missing day so the run continues.
+            warning('MODIS:readError', ...
+                'MODIS read failed for %04d-%02d-%02d (%s); filling MODIS with NaN.', yy, mm, dd, ME.message);
+            out.MODIS = nan_modis(nCells);
+        end
     end
     
     % --- SMAP ---
@@ -587,6 +598,17 @@ function out = process_one_day(d, smos_path, modis_path, smap_path, ...
     
     SMAPraw  = SMAP_read(file_path_smap, qfs, SMAP_resolution, SMAPQualityFlagFilter);
     out.SMAP = SMAP_process(SMAPraw, Target_Resolution, numcols, numrows, SMAP_resolution, sm_c, sm_r, SMAPQualityFlagFilter);
+end
+
+
+function M = nan_modis(nCells)
+    % All-NaN MODIS product for a day whose MODIS input is missing or
+    % unreadable. Field set/shape matches MODIS_process so downstream
+    % stacking and gap-fill are unaffected.
+    M.Modis_ndvi    = NaN(nCells, 1);
+    M.Modis_ndwi    = NaN(nCells, 1);
+    M.Modis_LST_ave = NaN(nCells, 1);
+    M.Modis_LST_dif = NaN(nCells, 1);
 end
 
 
