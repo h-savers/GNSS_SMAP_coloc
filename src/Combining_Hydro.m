@@ -16,7 +16,11 @@ function Combining_Hydro(configurationPath)
     HydroGNSS_processing = config.hydro_processing; % if yes the HydroGNSS data is also processed
     product_path = config.product_path;
     SMAP_resolution = config.SMAP_resolution;
-    
+    SNR_threshold = config.SNR_threshold; % dB, HydroGNSS SNR filter (NaN = no SNR filter)
+    if HydroGNSS_processing=="yes"
+        fprintf('HydroGNSS SNR threshold: %g dB\n', SNR_threshold);
+    end
+
     %%% preparing row/col from lat/lon for accumarray for 25km resolution
     %%% SMAP
     load("LatLon_SMAP_9km.mat");
@@ -135,9 +139,10 @@ function Combining_Hydro(configurationPath)
         seaMask=load('D:\Hamed\SML2OP\Auxiliary_Data\SEA_MASK_20240212.mat', 'SEA_MASK_25km');
         seaMask=seaMask.SEA_MASK_25km;
 
-        HydroGNSS_data         = apply_general_filter(HydroGNSS_data,         suffixes, seaMask);
-        HydroGNSS_GPS_data     = apply_general_filter(HydroGNSS_GPS_data,     suffixes, seaMask);
-        HydroGNSS_Galileo_data = apply_general_filter(HydroGNSS_Galileo_data, suffixes, seaMask);
+        filterOpts = struct('ThrSNR', SNR_threshold); % from configuration file
+        HydroGNSS_data         = apply_general_filter(HydroGNSS_data,         suffixes, seaMask, filterOpts);
+        HydroGNSS_GPS_data     = apply_general_filter(HydroGNSS_GPS_data,     suffixes, seaMask, filterOpts);
+        HydroGNSS_Galileo_data = apply_general_filter(HydroGNSS_Galileo_data, suffixes, seaMask, filterOpts);
 
         %%% convert SNR to linear before gridding
         HydroGNSS_data.SNR_1_L = 10.^(HydroGNSS_data.SNR_1_L/10);

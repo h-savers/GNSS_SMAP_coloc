@@ -40,7 +40,7 @@ Data for the TWO DAYS BEFORE `startDay` must also be present. They are read firs
 
 ## 5. Configuration file
 
-Copy `conf/configuration_Hydro_sample.cfg` and fill every key. All keys are mandatory, and the run stops immediately if a folder or file does not exist. Lines starting with `%` are ignored.
+Copy `conf/configuration_Hydro_sample.cfg` and fill every key. All keys are mandatory except `SNR_threshold` (0.5 dB when absent, with a warning), and the run stops immediately if a folder or file does not exist. Lines starting with `%` are ignored.
 
 ```
 Target_Resolution=25
@@ -54,6 +54,7 @@ product_path=D:\collocated_data
 SMAPQualityFlagFilter=yes
 hydro_processing=yes
 SMAP_resolution=9
+SNR_threshold=0.5
 ```
 
 | Key | Meaning |
@@ -66,6 +67,7 @@ SMAP_resolution=9
 | `SMAPQualityFlagFilter` | `yes`: produce two SMAP versions, `Filtered_B0` (recommended quality, flag bit 0 clear) and `Filtered_B2` (retrieval successful, flag bit 2 clear). `no`: no SMAP flag filtering. |
 | `hydro_processing` | `yes` to grid HydroGNSS. `no` to produce only the SMAP / SMOS / MODIS stacks. |
 | `SMAP_resolution` | Resolution of the SMAP input files: 9 (SM_P_E) or 36 (SM_P). |
+| `SNR_threshold` | HydroGNSS SNR threshold in dB (section 8): points with `SNR_1_L` below it lose their `_1_L` values. `NaN` disables the SNR filter. Optional, default 0.5. The value used is printed at the start of the run. It is not written into the output file name. |
 
 ## 6. Running
 
@@ -94,7 +96,7 @@ The `*_full_map` versions of the ancillary variables fill a NaN cell from the pr
 
 HydroGNSS, before gridding (`src/functions/apply_general_filter.m`), applied to the L1 left-hand channel `_1_L` only:
 
-- `SNR_1_L` below 0.5 dB: the `_1_L` channel values are set to NaN.
+- `SNR_1_L` below `SNR_threshold` (configuration file, default 0.5 dB): the `_1_L` channel values are set to NaN.
 - `reflectivityLinear_1_L` below -45 dB: the `_1_L` channel values are set to NaN.
 - `incidenceAngleDeg` above 45 degrees: the track-level (non-channel) values are set to NaN.
 - Specular point over the ocean (sea mask): all values are set to NaN.
