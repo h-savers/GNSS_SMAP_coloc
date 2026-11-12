@@ -45,17 +45,14 @@ classdef configFile_Hydro < Singleton
             end
         end
 
-        function value = get_number(obj, key, default)
-            % Numeric key that may be absent (returns default with a
-            % warning). Errors on a duplicate key or a non-numeric value so
-            % a typo cannot silently fall back to another threshold.
+        function value = get_number(obj, key)
+            % Mandatory numeric key, no default. Errors on a missing or
+            % duplicate key or a non-numeric value, so a typo cannot
+            % silently fall back to another value.
             element = obj.data(strtrim([obj.data.key]) == key);
 
             if isempty(element)
-                warning('configFile_Hydro:defaultValue', ...
-                    '[%s] not found in configuration file, using default %g.', key, default);
-                value = default;
-                return
+                throw(MException('INPUT:ERROR', "Cannot find [" + key + "] in configuration file."))
             end
             if numel(element) > 1
                 throw(MException('INPUT:ERROR', "[" + key + "] appears more than once in configuration file."))
@@ -97,11 +94,10 @@ classdef configFile_Hydro < Singleton
             obj.SMAPQualityFlagFilter = obj.get("SMAPQualityFlagFilter");
             obj.hydro_processing = obj.get("hydro_processing");
             obj.SMAP_resolution = str2num(obj.get("SMAP_resolution"));
-            % Optional. HydroGNSS SNR threshold in dB passed to
-            % apply_general_filter (ThrSNR): points with SNR_1_L below it
-            % lose their _1_L values. NaN disables the SNR filter. When the
-            % key is absent the previous hard-coded value, 0.5 dB, is used.
-            obj.SNR_threshold = obj.get_number("SNR_threshold", 0.5);
+            % HydroGNSS SNR threshold in dB passed to apply_general_filter
+            % (ThrSNR): points with SNR_1_L below it lose their _1_L
+            % values. NaN disables the SNR filter. Mandatory, no default.
+            obj.SNR_threshold = obj.get_number("SNR_threshold");
 
             obj.check_path(fullfile(obj.smap_path), "dir")
             obj.check_path(fullfile(obj.modis_path), "dir")

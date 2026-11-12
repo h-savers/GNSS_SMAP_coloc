@@ -33,8 +33,10 @@ function data = apply_general_filter(data, suffixes, seaMask, opts)
 %   seaMask    25-km EASE-Grid 2.0 sea mask, NaN over water and finite
 %              over land (SML2OP OceanFilter convention). Pass [] to
 %              skip the ocean filter.
-%   opts       (optional) struct overriding any SML2OP-style knob:
-%                .ThrSNR             default 0.5  (< filter; input is dB)
+%   opts       struct of SML2OP-style knobs:
+%                .ThrSNR             REQUIRED, no default (< filter;
+%                                    input is dB). Combining_Hydro sets it
+%                                    from SNR_threshold in the cfg.
 %                .ThrRefl            default -45  (< filter; dB)
 %                .ThrIncidenceAngle  default 45   (> filter; degrees)
 %                .gridSize           default [1388 584]   (25-km grid)
@@ -48,13 +50,18 @@ function data = apply_general_filter(data, suffixes, seaMask, opts)
 
     if nargin < 4 || isempty(opts), opts = struct(); end
 
+    % The SNR threshold has no default: it must come from the caller
+    % (Combining_Hydro passes SNR_threshold from the configuration file).
+    if ~isfield(opts, 'ThrSNR') || ~isnumeric(opts.ThrSNR) || ~isscalar(opts.ThrSNR)
+        error('apply_general_filter:noThrSNR', ...
+              'opts.ThrSNR (numeric scalar, dB) is required; set SNR_threshold in the configuration file.');
+    end
+
     % Defaults preserve the historical collocation-pipeline behaviour.
-    % SML2OP's Thr_Refl is also -45 dB; ThrSNR=0.5 reflects this pipeline
-    % (SML2OP's default of 2 is for a differently-defined SNR variable).
+    % SML2OP's Thr_Refl is also -45 dB.
     % Incidence is kept active at 45 deg even though SML2OP's shipped
     % config sets it NaN — the collocation pipeline has historically
     % applied this cap.
-    opts = setdefault(opts, 'ThrSNR',            0.5);
     opts = setdefault(opts, 'ThrRefl',           -45);
     opts = setdefault(opts, 'ThrIncidenceAngle', 45);
     opts = setdefault(opts, 'gridSize',          [1388, 584]);
